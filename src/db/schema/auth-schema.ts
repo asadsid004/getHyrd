@@ -62,3 +62,5 @@ export const verification = pgTable("verification", {
 });
 
 export const authSchema = { user, session, account, verification }
+
+export type User = typeof user.$inferSelect;
