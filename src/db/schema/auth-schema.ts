@@ -1,4 +1,10 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+
+export const onboardingStepEnum = pgEnum("onboarding_step_enum", [
+  "preferences",
+  "resume",
+  "completed"
+]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -11,7 +17,9 @@ export const user = pgTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  // profileCompleted: boolean("profile_completed").default(false).notNull(),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  onboardingStep: onboardingStepEnum("onboarding_step").notNull().default("preferences"),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
 });
 
 export const session = pgTable("session", {
@@ -64,3 +72,7 @@ export const verification = pgTable("verification", {
 export const authSchema = { user, session, account, verification }
 
 export type User = typeof user.$inferSelect;
+export type Session = typeof session.$inferSelect;
+
+// export type User = typeof auth.$Infer.Session.user;
+// export type Session = typeof auth.$Infer.Session.session;

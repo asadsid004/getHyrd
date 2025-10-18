@@ -15,5 +15,19 @@ export const auth = betterAuth({
         provider: "pg",
         schema: authSchema
     }),
+    user: {
+        additionalFields: {
+            onboardingCompleted: {
+                type: "boolean",
+                defaultValue: false,
+                required: false,
+            },
+            onboardingStep: {
+                type: "string",
+                defaultValue: "preferences",
+                required: false,
+            },
+        },
+    },
     plugins: [nextCookies()]
 });
