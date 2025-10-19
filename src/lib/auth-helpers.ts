@@ -12,7 +12,7 @@ export async function requireAuth() {
     const session = await getSession();
 
     if (!session) {
-        redirect("/login");
+        redirect("/");
     }
 
     return session;

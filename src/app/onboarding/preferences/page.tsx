@@ -6,7 +6,7 @@ import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireOnboardingStep } from "@/lib/auth-helpers";
-// import { requireOnboardingStep } from "@/lib/auth-helpers";
+import { PreferencesForm } from "@/components/onboarding/preferences-form";
 
 export default async function PreferencesPage() {
   await requireOnboardingStep("preferences");
@@ -22,19 +22,20 @@ export default async function PreferencesPage() {
       throw new Error("Not authenticated");
     }
 
-    // Update the onboarding step in DB
     await db
       .update(user)
       .set({ onboardingStep: "resume" })
       .where(eq(user.id, session.user.id));
 
-    // Redirect to resume page
     redirect("/onboarding/resume");
   }
 
   return (
-    <form action={updateStep}>
-      <Button type="submit">Change</Button>
-    </form>
+    // <form action={updateStep}>
+    //   <Button type="submit">Change</Button>
+    // </form>
+    <div className="flex justify-center min-h-svh items-center">
+      <PreferencesForm />
+    </div>
   );
 }
