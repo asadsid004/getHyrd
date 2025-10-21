@@ -20,6 +20,8 @@ export const jobPreferences = pgTable("job_preferences", {
     type: jobTypeEnum("type").array().notNull(),
     mode: jobModeEnum("mode").array().notNull(),
     location: text("location").array().notNull().default([]),
+    // To be used for sorting or filtering jobs
+    // postedAt: timestamp("posted_at").defaultNow().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()

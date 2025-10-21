@@ -48,6 +48,7 @@ export function PreferencesForm() {
     orpc.onboarding.savePreferences.mutationOptions({
       onSuccess: () => {
         toast.success("Preferences saved successfully!");
+        router.push("/onboarding/resume");
       },
       onError: (error) => {
         toast.error(`Error saving preferences: ${error.message}`);
@@ -55,7 +56,6 @@ export function PreferencesForm() {
       },
     })
   );
-
   const form = useForm({
     defaultValues: {
       roles: [] as string[],
@@ -66,9 +66,8 @@ export function PreferencesForm() {
     validators: {
       onSubmit: PreferencesSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: ({ value }) => {
       savePreferencesMutation.mutate(value);
-      router.push("/onboarding/resume");
     },
   });
 

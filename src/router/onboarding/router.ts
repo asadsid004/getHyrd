@@ -1,7 +1,7 @@
 import { authed } from "@/middlewares/auth";
-import { PreferencesSchema, VoidSchema } from "./schema";
+import { PreferencesSchema, ResumeUploadSchema, ResumeExtractResponseSchema } from "./schema";
 import { db } from "@/db/drizzle";
-import { jobPreferences, user } from "@/db/schema";
+import { jobPreferences, user, resumes, resumeData, userProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export const savePreferences = authed
@@ -12,7 +12,6 @@ export const savePreferences = authed
         tags: ["onboarding"],
     })
     .input(PreferencesSchema)
-    .output(VoidSchema)
     .handler(async ({ input, context }) => {
         const userId = context.user.id;
 
@@ -57,4 +56,117 @@ export const savePreferences = authed
                 })
                 .where(eq(user.id, userId));
         });
+    });
+
+export const extractResume = authed
+    .route({
+        method: "POST",
+        path: "/onboarding",
+        summary: "Extract resume details and save to database",
+        tags: ["onboarding"],
+    })
+    .input(ResumeUploadSchema)
+    .output(ResumeExtractResponseSchema)
+    .handler(async ({ input, context }) => {
+        const userId = context.user.id;
+
+        const userRow = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+        if (userRow.length === 0) {
+            throw new Error("User not found in database. Ensure the user is created before uploading a resume.");
+        }
+
+        if (context.user.onboardingCompleted) {
+            throw new Error("Onboarding already completed. Use the update resume endpoint instead.");
+        }
+
+        if (context.user.onboardingStep !== "resume") {
+            throw new Error("User is not in the resume step. Ensure the user is in the resume step before uploading a resume.");
+        }
+
+        // Step 0: Call AI service to extract resume data
+        const res = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+        });
+
+        const { message, result } = await res.json();
+        if (!res.ok || !result) {
+            throw new Error(message || "Failed to extract resume details");
+        }
+
+        // Step 1: Transaction to ensure atomic updates
+        try {
+            await db.transaction(async (tx) => {
+                console.log("Transaction started");
+
+                const updatedResult = {
+                    name: context.user.name,
+                    email: context.user.email,
+                    ...result
+                }
+
+                // Step 2: Save parsed resume data
+                const [rd] = await tx.insert(resumeData).values({
+                    userId,
+                    fullData: updatedResult,
+                }).returning();
+
+                console.log("Resume data saved");
+
+                // Step 3: Create resume metadata record (first resume = primary)
+                const [resumeRecord] = await tx.insert(resumes).values({
+                    userId,
+                    fileName: 'resume.pdf',
+                    mimeType: input.mimeType || 'application/pdf',
+                    isPrimary: true, // First resume during onboarding is always primary
+                    resumeDataId: rd.id,
+                }).returning();
+
+                console.log("Resume metadata created");
+
+                // Step 4: Create user profile with primary resume ID
+                await tx.insert(userProfiles).values({
+                    userId,
+                    primaryResumeId: resumeRecord.id, // Link to primary resume
+                    phone: result.phone,
+                    address: result.address,
+                    linkedin: result.linkedin,
+                    github: result.github,
+                    portfolio: result.portfolio,
+                    summary: result.summary,
+                    skills: result.skills || [],
+                    certifications: result.certifications || [],
+                    achievements: result.achievements || [],
+                    languages: result.languages || [],
+                    experience: result.experience || [],
+                    projects: result.projects || [],
+                    education: result.education || [],
+                    yearsOfExperience: result.yearsOfExperience || 0,
+                });
+
+                console.log("User profile created");
+
+                // Step 5: Mark onboarding as completed
+                await tx
+                    .update(user)
+                    .set({
+                        onboardingStep: "completed",
+                        onboardingCompleted: true,
+                        onboardingCompletedAt: new Date(),
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(user.id, userId));
+
+                console.log("Onboarding completed");
+            });
+        } catch (error) {
+            console.error("Transaction failed:", error);
+            throw error;
+        }
+
+        return {
+            message: "Resume processed successfully",
+            result,
+        };
     });

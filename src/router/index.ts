@@ -1,10 +1,11 @@
-import { savePreferences } from "./onboarding/router";
+import { extractResume, savePreferences } from "./onboarding/router";
 
 /**
  * Contains all orpc routes
  */
 export const router = {
     onboarding: {
-        savePreferences
+        savePreferences,
+        extractResume
     }
 }
