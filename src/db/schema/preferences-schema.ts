@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 export const jobTypeEnum = pgEnum("job_type", [
@@ -11,7 +11,7 @@ export const jobTypeEnum = pgEnum("job_type", [
 export const jobModeEnum = pgEnum("job_mode", ["on-site", "remote", "hybrid"]);
 
 export const jobPreferences = pgTable("job_preferences", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: uuid("id").defaultRandom().primaryKey(),
     userId: text("user_id")
         .notNull()
         .unique()
