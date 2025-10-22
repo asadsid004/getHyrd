@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export type Preferences = z.infer<typeof PreferencesSchema>;
 
+export type Resume = z.infer<typeof ResumeSchema>;
+
 export const normalizeString = (str: string) =>
     str.trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -13,7 +15,7 @@ export const ResumeUploadSchema = z.object({
     data: z.string(),
 });
 
-const ResumeSchema = z.object({
+export const ResumeSchema = z.object({
     name: z.string().optional().nullable(),
     email: z.string().optional().nullable(),
     phone: z.string().optional().nullable(),

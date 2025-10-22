@@ -1,8 +1,9 @@
 import { authed } from "@/middlewares/auth";
-import { PreferencesSchema, ResumeUploadSchema, ResumeExtractResponseSchema } from "./schema";
+import { PreferencesSchema, ResumeUploadSchema, ResumeExtractResponseSchema, Resume } from "./schema";
 import { db } from "@/db/drizzle";
 import { jobPreferences, user, resumes, resumeData, userProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { calculateExperienceYears, extractResumeWithGemini } from "@/service/onboarding/resume";
 
 export const savePreferences = authed
     .route({
@@ -70,6 +71,8 @@ export const extractResume = authed
     .handler(async ({ input, context }) => {
         const userId = context.user.id;
 
+        console.log('Extract resume input:', { input }); // Debug input
+
         const userRow = await db.select().from(user).where(eq(user.id, userId)).limit(1);
         if (userRow.length === 0) {
             throw new Error("User not found in database. Ensure the user is created before uploading a resume.");
@@ -83,17 +86,23 @@ export const extractResume = authed
             throw new Error("User is not in the resume step. Ensure the user is in the resume step before uploading a resume.");
         }
 
-        // Step 0: Call AI service to extract resume data
-        const res = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(input),
-        });
+        const resumeFileData = Buffer.from(input.data, "base64");
 
-        const { message, result } = await res.json();
-        if (!res.ok || !result) {
-            throw new Error(message || "Failed to extract resume details");
+        console.log('Resume file received', { file: input.fileName })
+
+        // Step 0: Call AI service to extract resume data
+        let result: Resume;
+        try {
+            result = await extractResumeWithGemini(input.fileName, resumeFileData.buffer, input.mimeType);
+        } catch (error) {
+            console.error("Error extracting resume with Gemini:", error);
+            throw error;
         }
+
+        const yearsOfExperience = calculateExperienceYears(result.experience);
+        result.yearsOfExperience = yearsOfExperience;
+
+        console.log('Resume data extracted', { result })
 
         // Step 1: Transaction to ensure atomic updates
         try {
@@ -142,7 +151,7 @@ export const extractResume = authed
                     experience: result.experience || [],
                     projects: result.projects || [],
                     education: result.education || [],
-                    yearsOfExperience: result.yearsOfExperience || 0,
+                    yearsOfExperience: (result.yearsOfExperience || 0).toFixed(1),
                 });
 
                 console.log("User profile created");
