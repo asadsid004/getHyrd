@@ -7,6 +7,7 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireOnboarding } from "@/lib/auth-helpers";
+import { JobSearchForm } from "@/components/job-search-form";
 
 const Dashboard = async () => {
   const session = await requireOnboarding();
@@ -79,6 +80,11 @@ const Dashboard = async () => {
             Set Onboarding FALSE
           </Button>
         </form>
+      </div>
+
+      <div className="w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4 text-center">Job Search</h2>
+        <JobSearchForm />
       </div>
     </div>
   );
