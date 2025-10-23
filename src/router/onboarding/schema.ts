@@ -34,7 +34,7 @@ export const ResumeSchema = z.object({
             description: z.string().optional().nullable(),
             achievements: z.array(z.string()).optional().nullable(),
         })
-    ).optional(),
+    ).optional().nullable(),
     projects: z.array(
         z.object({
             title: z.string().optional().nullable(),
@@ -43,7 +43,7 @@ export const ResumeSchema = z.object({
             highlights: z.array(z.string()).optional().nullable(),
             link: z.string().optional().nullable(),
         })
-    ).optional(),
+    ).optional().nullable(),
     education: z.array(
         z.object({
             school: z.string().optional().nullable(),
@@ -52,7 +52,7 @@ export const ResumeSchema = z.object({
             endDate: z.string().optional().nullable(),
             cgpaOrPercentage: z.string().optional().nullable(),
         })
-    ).optional(),
+    ).optional().nullable(),
     certifications: z.array(z.string()).optional().nullable(),
     achievements: z.array(z.string()).optional().nullable(),
     languages: z.array(z.string()).optional().nullable(),

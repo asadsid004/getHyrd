@@ -1,7 +1,7 @@
 import { extractResume, savePreferences } from "./onboarding/router";
 import { jobSearch } from "./job-search/router";
 import { getJobs } from "./jobs/router";
-import { getResumes } from "./resumes/router";
+import { getResumes, updateResumeData, getResume } from "./resumes/router";
 
 /**
  * Contains all orpc routes
@@ -13,5 +13,5 @@ export const router = {
     },
     jobsearch: { search: jobSearch },
     jobs: { get: getJobs },
-    resumes: { get: getResumes }
+    resumes: { get: getResumes, update: updateResumeData, getOne: getResume }
 }

@@ -1,9 +1,8 @@
 import { authed } from "@/middlewares/auth";
-import { PreferencesSchema, ResumeUploadSchema, ResumeExtractResponseSchema, Resume } from "./schema";
+import { PreferencesSchema, ResumeUploadSchema, ResumeExtractResponseSchema } from "./schema";
 import { db } from "@/db/drizzle";
 import { jobPreferences, user, resumes, resumeData, userProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { calculateExperienceYears, extractResumeWithGemini } from "@/service/onboarding/resume";
 
 export const savePreferences = authed
     .route({
@@ -86,23 +85,18 @@ export const extractResume = authed
             throw new Error("User is not in the resume step. Ensure the user is in the resume step before uploading a resume.");
         }
 
-        const resumeFileData = Buffer.from(input.data, "base64");
-
         console.log('Resume file received', { file: input.fileName })
 
-        // Step 0: Call AI service to extract resume data
-        let result: Resume;
-        try {
-            result = await extractResumeWithGemini(input.fileName, resumeFileData.buffer, input.mimeType);
-        } catch (error) {
-            console.error("Error extracting resume with Gemini:", error);
-            throw error;
+        const res = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+        });
+
+        const { message, result } = await res.json();
+        if (!res.ok || !result) {
+            throw new Error(message || "Failed to extract resume details");
         }
-
-        const yearsOfExperience = calculateExperienceYears(result.experience);
-        result.yearsOfExperience = yearsOfExperience;
-
-        console.log('Resume data extracted', { result })
 
         // Step 1: Transaction to ensure atomic updates
         try {
@@ -110,10 +104,12 @@ export const extractResume = authed
                 console.log("Transaction started");
 
                 const updatedResult = {
-                    name: context.user.name,
-                    email: context.user.email,
-                    ...result
+                    ...result,
+                    name: userRow[0].name || result.name,
+                    email: userRow[0].email || result.email,
                 }
+
+                console.log("Updated result:", updatedResult);
 
                 // Step 2: Save parsed resume data
                 const [rd] = await tx.insert(resumeData).values({
