@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/jobs", label: "Jobs" },
   { href: "/resumes", label: "Resumes" },
+  { href: "/cover-letter", label: "Cover Letter" },
   { href: "/interview", label: "Interview" },
   { href: "/resource", label: "Resource" },
 ];
@@ -28,7 +29,7 @@ export function Navbar() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="hidden md:flex items-center space-x-2">
+        <nav className="hidden md:flex items-center">
           {navItems.map((item) => (
             <Button
               key={item.href}

@@ -5,6 +5,7 @@ import { ResumeContentForm } from "@/components/resumes/resume-content-form";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { ResumeAnalyseTextForm } from "@/components/resumes/resume-analyse-text-form";
 import { ResumeOptimizeTextForm } from "@/components/resumes/resume-optmize-text-form";
+import { ResumeDelete } from "@/components/resumes/resume-delete";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -49,6 +50,7 @@ export default async function ResumeContentPage({ params }: PageProps) {
         <ButtonGroup>
           <ResumeAnalyseTextForm id={id} />
           <ResumeOptimizeTextForm resumeId={id} />
+          <ResumeDelete id={id} />
         </ButtonGroup>
       </div>
 

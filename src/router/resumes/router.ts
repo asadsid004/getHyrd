@@ -592,6 +592,49 @@ export const optimizeResumeAnalysisBased = authed
         });
     })
 
+export const deleteResume = authed
+    .route({
+        method: "DELETE",
+        path: "/resumes/:id",
+        summary: "Delete resume",
+        tags: ["resumes"]
+    })
+    .input(z.object({
+        id: z.string(),
+    }))
+    .output(z.object({
+        success: z.boolean(),
+    }))
+    .handler(async ({ input, context }) => {
+        const { id } = input;
+
+        // Verify ownership
+        const existing = await db
+            .select({ userId: resumes.userId })
+            .from(resumes)
+            .where(eq(resumes.id, id))
+            .limit(1);
+
+        if (!existing.length || existing[0].userId !== context.user.id) {
+            throw new Error("Resume not found or unauthorized");
+        }
+
+        // Delete in transaction to handle related data
+        await db.transaction(async (tx) => {
+            // Delete related analyses first
+            await tx
+                .delete(resumeAnalyses)
+                .where(eq(resumeAnalyses.resumeId, id));
+
+            // Delete the resume
+            await tx
+                .delete(resumes)
+                .where(eq(resumes.id, id));
+        });
+
+        return { success: true };
+    });
+
 export const createResume = authed
     .route({
         method: "POST",

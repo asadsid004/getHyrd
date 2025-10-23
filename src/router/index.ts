@@ -1,7 +1,8 @@
 import { extractResume, savePreferences } from "./onboarding/router";
 import { jobSearch } from "./job-search/router";
 import { getJobs } from "./jobs/router";
-import { getResumes, updateResumeData, getResume, analyseResumeFromFile, optimizeResumeFromFile, getResumeAnalyses, analyseResumeFromText, optimizeResumeFromText, optimizeResumeAnalysisBased, createResume } from "./resumes/router";
+import { getResumes, updateResumeData, getResume, analyseResumeFromFile, optimizeResumeFromFile, getResumeAnalyses, analyseResumeFromText, optimizeResumeFromText, optimizeResumeAnalysisBased, createResume, deleteResume } from "./resumes/router";
+import { getCoverLetters, getCoverLetter, createCoverLetter, updateCoverLetter, deleteCoverLetter } from "./cover-letters/router";
 
 /**
  * Contains all orpc routes
@@ -27,6 +28,14 @@ export const router = {
         optimizeText: optimizeResumeFromText,
         optimizeAnalysisBased: optimizeResumeAnalysisBased,
         create: createResume,
+        delete: deleteResume,
         getAnalyses: getResumeAnalyses
+    },
+    coverLetters: {
+        get: getCoverLetters,
+        getOne: getCoverLetter,
+        create: createCoverLetter,
+        update: updateCoverLetter,
+        delete: deleteCoverLetter
     }
 }

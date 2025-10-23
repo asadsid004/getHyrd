@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Calendar,
-  File,
   FileText,
   Mail,
   Phone,
@@ -28,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { ResumeDelete } from "./resume-delete";
 
 type FilterType = "all" | "primary";
 type SortType = "newest" | "oldest" | "name";
@@ -75,7 +75,8 @@ export function ResumesList() {
           resume.resumeData?.email?.toLowerCase().includes(searchLower) ||
           resume.resumeData?.skills?.some((skill) =>
             skill.toLowerCase().includes(searchLower)
-          );
+          ) ||
+          resume.resumeData?.summary?.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
 
@@ -159,11 +160,11 @@ export function ResumesList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-8">
       {/* Filters and Search */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Input
-          placeholder="Search resumes by name, email, or skills..."
+          placeholder="Search resumes by name, email, skills, summary..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1"
@@ -278,12 +279,15 @@ export function ResumesList() {
                   </div>
                 </div>
               </div>
-              <Button asChild>
-                <Link href={`/resumes/${resume.id}`}>
-                  <File />
-                  View
-                </Link>
-              </Button>
+              <div className="flex gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/resumes/${resume.id}`}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    View
+                  </Link>
+                </Button>
+                <ResumeDelete id={resume.id} size="sm" />
+              </div>
             </CardHeader>
             <CardContent>
               {resume.resumeData && (
