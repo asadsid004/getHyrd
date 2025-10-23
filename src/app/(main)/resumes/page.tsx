@@ -2,10 +2,9 @@ import { ResumesList } from "@/components/resumes/resumes-list";
 import { getQueryClient, HydrateClient } from "@/lib/query/hydration";
 import { orpc } from "@/lib/orpc";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Button } from "@/components/ui/button";
 import { ResumeAnalyseForm } from "@/components/resumes/resume-analyse-form";
-import { PlusIcon } from "lucide-react";
 import { ResumeOptimizeForm } from "@/components/resumes/resume-optimize-form";
+import { ResumeCreateForm } from "@/components/resumes/resume-create-form";
 
 export default async function ResumesPage() {
   const queryClient = getQueryClient();
@@ -33,10 +32,7 @@ export default async function ResumesPage() {
         <ButtonGroup aria-label="Resume actions">
           <ResumeAnalyseForm />
           <ResumeOptimizeForm />
-          <Button variant="outline">
-            Create
-            <PlusIcon />
-          </Button>
+          <ResumeCreateForm />
         </ButtonGroup>
       </div>
 

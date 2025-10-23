@@ -1249,24 +1249,6 @@ export function ResumeContentForm({
                           </div>
                         )}
 
-                        {/* Certifications */}
-                        {values.certifications &&
-                          values.certifications.length > 0 && (
-                            <div>
-                              <h2 className="text-sm font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
-                                CERTIFICATIONS
-                              </h2>
-                              <ul className="list-none space-y-0.5">
-                                {values.certifications.map((cert, idx) => (
-                                  <li key={idx} className="pl-2">
-                                    <span className="inline-block w-2">•</span>
-                                    <span className="inline">{cert}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
                         {/* Projects */}
                         {values.projects && values.projects.length > 0 && (
                           <div>
@@ -1355,7 +1337,23 @@ export function ResumeContentForm({
                             </div>
                           </div>
                         )}
-
+                        {/* Certifications */}
+                        {values.certifications &&
+                          values.certifications.length > 0 && (
+                            <div>
+                              <h2 className="text-sm font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
+                                CERTIFICATIONS
+                              </h2>
+                              <ul className="list-none space-y-0.5">
+                                {values.certifications.map((cert, idx) => (
+                                  <li key={idx} className="pl-2">
+                                    <span className="inline-block w-2">•</span>
+                                    <span className="inline">{cert}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         {/* Languages */}
                         {values.languages && values.languages.length > 0 && (
                           <div className="pl-2">

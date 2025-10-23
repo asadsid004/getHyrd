@@ -273,7 +273,7 @@ export function ResumesList() {
                     <Calendar className="h-4 w-4" />
                     Uploaded{" "}
                     {resume.uploadDate
-                      ? new Date(resume.uploadDate).toLocaleDateString()
+                      ? new Date(resume.uploadDate).toLocaleDateString("en-GB")
                       : "Unknown"}
                   </div>
                 </div>

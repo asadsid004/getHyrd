@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { resumeData, resumes, resumeAnalyses } from "@/db/schema";
+import { resumeData, resumes, resumeAnalyses, userProfiles } from "@/db/schema";
 import { authed } from "@/middlewares/auth";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
@@ -590,4 +590,72 @@ export const optimizeResumeAnalysisBased = authed
 
             console.log("Resume metadata created");
         });
+    })
+
+export const createResume = authed
+    .route({
+        method: "POST",
+        path: "/resumes",
+        summary: "Create resume",
+        tags: ["resumes"]
+    })
+    .input(z.object({
+        role: z.string(),
+        description: z.string(),
+    }))
+    .output(z.object({
+        id: z.string(),
+    }))
+    .handler(async ({ input, context }) => {
+        const { role, description } = input;
+
+        if (!role || !description) {
+            throw new Error("Invalid input");
+        }
+
+        const userProfile = await db.select().from(userProfiles).where(eq(userProfiles.userId, context.user.id))
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: id, userId: userId, ...remainingProfile } = userProfile[0]
+
+        const inputProfile = {
+            ...remainingProfile,
+            yearsOfExperience: Number(remainingProfile.yearsOfExperience)
+        }
+
+        const optimizedResume = await optimizeResumeTextData(role, description, inputProfile);
+
+
+        return await db.transaction(async (tx) => {
+            console.log("Transaction started");
+            const userId = context.user.id;
+            const updatedResult = {
+                ...optimizedResume.object,
+                name: context.user.name,
+                email: context.user.email,
+            }
+
+            console.log("Updated result:", updatedResult);
+
+            // Step 2: Save parsed resume data
+            const [rd] = await tx.insert(resumeData).values({
+                userId,
+                fullData: updatedResult,
+            }).returning();
+
+            console.log("Resume data saved");
+
+            // Step 3: Create resume metadata record (first resume = primary)
+            const [resumeRecord] = await tx.insert(resumes).values({
+                userId,
+                fileName: 'resume.pdf',
+                mimeType: 'application/pdf',
+                isPrimary: false, // First resume during onboarding is always primary
+                resumeDataId: rd.id as number,
+            }).returning();
+
+            console.log("Resume metadata created");
+
+            return { id: resumeRecord.id };
+        })
     })

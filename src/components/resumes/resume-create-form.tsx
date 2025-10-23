@@ -25,8 +25,9 @@ import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { Spinner } from "../ui/spinner";
 import { useRouter } from "next/navigation";
+import { PlusIcon } from "lucide-react";
 
-export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
+export const ResumeCreateForm = () => {
   const router = useRouter();
 
   const form = useForm({
@@ -42,22 +43,21 @@ export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
       onSubmit: async ({ value }) => {
         const input = {
           ...value,
-          resumeId,
         };
 
-        optimizeMutation.mutate(input);
+        createMutation.mutate(input);
       },
     },
   });
 
-  const optimizeMutation = useMutation(
-    orpc.resumes.optimizeText.mutationOptions({
-      onSuccess: () => {
-        toast.success("Resume optimized successfully");
-        router.refresh();
+  const createMutation = useMutation(
+    orpc.resumes.create.mutationOptions({
+      onSuccess: ({ id }) => {
+        toast.success("Resume created successfully");
+        router.push(`/resumes/${id}`);
       },
       onError: (error) => {
-        toast.error("Error optimizing resume: " + error.cause);
+        toast.error("Error creating resume: " + error.cause);
       },
     })
   );
@@ -65,14 +65,16 @@ export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
   return (
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
-        <Button variant="outline">Optimize</Button>
+        <Button variant="outline">
+          Create <PlusIcon className="h-4 w-4 ml-2" />
+        </Button>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <div className="overflow-y-auto p-6">
           <ResponsiveDialogHeader className="sm:text-center">
-            <ResponsiveDialogTitle>Resume Optimize</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>Create Resume</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              Optimize your resume
+              Create your resume
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <form
@@ -90,7 +92,7 @@ export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
                   <Field data-invalid={isInvalid} className="mb-4">
                     <FieldLegend className="-mb-1">Role</FieldLegend>
                     <FieldDescription className="mb-0">
-                      The role you want to optimize for
+                      The role you want to create for
                     </FieldDescription>
                     <FieldContent>
                       <Input
@@ -133,15 +135,15 @@ export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
             <Button
               type="submit"
               className="mt-4"
-              disabled={optimizeMutation.isPending}
+              disabled={createMutation.isPending}
             >
-              {optimizeMutation.isPending ? (
+              {createMutation.isPending ? (
                 <>
                   <Spinner />
-                  Optimizing...
+                  Creating...
                 </>
               ) : (
-                "Optimize"
+                "Create"
               )}
             </Button>
           </form>
