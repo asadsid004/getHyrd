@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { Spinner } from "../ui/spinner";
 import { useRouter } from "next/navigation";
 
-export const ResumeAnalyseForm = () => {
+export const ResumeOptimizeForm = () => {
   const router = useRouter();
 
   const form = useForm({
@@ -65,19 +65,19 @@ export const ResumeAnalyseForm = () => {
           resumeData: base64,
         };
 
-        analyseMutation.mutate(input);
+        optimizeMutation.mutate(input);
       },
     },
   });
 
-  const analyseMutation = useMutation(
-    orpc.resumes.analyse.mutationOptions({
+  const optimizeMutation = useMutation(
+    orpc.resumes.optimize.mutationOptions({
       onSuccess: (data) => {
-        toast.success("Resume analysed successfully");
+        toast.success("Resume optimized successfully");
         router.push(`/resumes/${data.id}`);
       },
       onError: (error) => {
-        toast.error("Error analysing resume: " + error.cause);
+        toast.error("Error optimizing resume: " + error.cause);
       },
     })
   );
@@ -85,14 +85,14 @@ export const ResumeAnalyseForm = () => {
   return (
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
-        <Button variant="outline">Analyze</Button>
+        <Button variant="outline">Optimize</Button>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <div className="overflow-y-auto p-6">
           <ResponsiveDialogHeader className="sm:text-center">
-            <ResponsiveDialogTitle>Resume Analyse</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>Resume Optimize</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              Analyze your resume
+              Optimize your resume
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <form
@@ -110,7 +110,7 @@ export const ResumeAnalyseForm = () => {
                   <Field data-invalid={isInvalid} className="mb-4">
                     <FieldLegend className="-mb-1">Role</FieldLegend>
                     <FieldDescription className="mb-0">
-                      The role you want to analyse for
+                      The role you want to optimize for
                     </FieldDescription>
                     <FieldContent>
                       <Input
@@ -181,15 +181,15 @@ export const ResumeAnalyseForm = () => {
             <Button
               type="submit"
               className="mt-4"
-              disabled={analyseMutation.isPending}
+              disabled={optimizeMutation.isPending}
             >
-              {analyseMutation.isPending ? (
+              {optimizeMutation.isPending ? (
                 <>
                   <Spinner />
-                  Analyzing...
+                  Optimizing...
                 </>
               ) : (
-                "Analyse"
+                "Optimize"
               )}
             </Button>
           </form>

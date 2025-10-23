@@ -107,16 +107,7 @@ Other Guidelines:
 }
 
 export const analyseResumeTextData = async (role: string, description: string, resumeText: string) => {
-    return generateObject({
-        model: google("gemini-2.5-flash"),
-        schema: aiAnalyzeSchema,
-        messages: [
-            {
-                role: "user",
-                content: [
-                    {
-                        type: "text",
-                        text: `
+    const prompt = `
 You are an expert resume reviewer and hiring advisor with deep understanding of ATS optimization, recruitment standards, and hiring psychology.
 
 You will receive:
@@ -161,10 +152,14 @@ Write feedback directly addressing the candidate ("you"), with clear, practical 
 Avoid unnecessary politeness or fluff — keep it professional and useful.
 
 Return **only structured JSON** according to the schema — no Markdown, commentary, or prose.
-            `,
-                    },
-                ],
-            },
-        ],
+            `
+
+    return generateObject({
+        model: google("gemini-2.5-flash"),
+        schema: aiAnalyzeSchema,
+        prompt: prompt,
+
+
     });
 };
+

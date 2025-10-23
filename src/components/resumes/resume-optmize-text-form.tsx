@@ -20,64 +20,44 @@ import {
   FieldLegend,
 } from "../ui/field";
 import { Textarea } from "../ui/textarea";
-import { FileUpload } from "../file-upload";
 import { useMutation } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { Spinner } from "../ui/spinner";
 import { useRouter } from "next/navigation";
 
-export const ResumeAnalyseForm = () => {
+export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
   const router = useRouter();
 
   const form = useForm({
     defaultValues: {
       role: "",
       description: "",
-      resume: null as File | null,
     },
     validators: {
       onChange: z.object({
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
-        resume: z.instanceof(File, { message: "Resume is required" }),
       }),
       onSubmit: async ({ value }) => {
-        if (!value.resume) {
-          toast.error("Please upload a resume");
-          return;
-        }
-
-        const file = value.resume;
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            const commaIndex = result.indexOf(",");
-            resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
-          };
-          reader.onerror = (e) => reject(e);
-          reader.readAsDataURL(file);
-        });
-
         const input = {
           ...value,
-          resumeData: base64,
+          resumeId,
         };
 
-        analyseMutation.mutate(input);
+        optimizeMutation.mutate(input);
       },
     },
   });
 
-  const analyseMutation = useMutation(
-    orpc.resumes.analyse.mutationOptions({
+  const optimizeMutation = useMutation(
+    orpc.resumes.optimizeText.mutationOptions({
       onSuccess: (data) => {
-        toast.success("Resume analysed successfully");
+        toast.success("Resume optimized successfully");
         router.push(`/resumes/${data.id}`);
       },
       onError: (error) => {
-        toast.error("Error analysing resume: " + error.cause);
+        toast.error("Error optimizing resume: " + error.cause);
       },
     })
   );
@@ -85,14 +65,14 @@ export const ResumeAnalyseForm = () => {
   return (
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
-        <Button variant="outline">Analyze</Button>
+        <Button variant="outline">Optimize</Button>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <div className="overflow-y-auto p-6">
           <ResponsiveDialogHeader className="sm:text-center">
-            <ResponsiveDialogTitle>Resume Analyse</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>Resume Optimize</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              Analyze your resume
+              Optimize your resume
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <form
@@ -110,7 +90,7 @@ export const ResumeAnalyseForm = () => {
                   <Field data-invalid={isInvalid} className="mb-4">
                     <FieldLegend className="-mb-1">Role</FieldLegend>
                     <FieldDescription className="mb-0">
-                      The role you want to analyse for
+                      The role you want to optimize for
                     </FieldDescription>
                     <FieldContent>
                       <Input
@@ -150,46 +130,18 @@ export const ResumeAnalyseForm = () => {
                 );
               }}
             </form.Field>
-            <form.Field name="resume">
-              {(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched &&
-                  field.state.meta.errors.length > 0;
-
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLegend>Resume</FieldLegend>
-                    <FileUpload
-                      aria-invalid={isInvalid}
-                      onFileChange={(file) => {
-                        field.handleChange(file);
-                      }}
-                      value={field.state.value}
-                      label="Upload your resume here"
-                      description="Drag and drop or click to browse"
-                      allowedTypes={["application/pdf"]}
-                      maxSizeMB={10}
-                    />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                );
-              }}
-            </form.Field>
-
             <Button
               type="submit"
               className="mt-4"
-              disabled={analyseMutation.isPending}
+              disabled={optimizeMutation.isPending}
             >
-              {analyseMutation.isPending ? (
+              {optimizeMutation.isPending ? (
                 <>
                   <Spinner />
-                  Analyzing...
+                  Optimizing...
                 </>
               ) : (
-                "Analyse"
+                "Optimize"
               )}
             </Button>
           </form>

@@ -1,11 +1,10 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getQueryClient, HydrateClient } from "@/lib/query/hydration";
 import { orpc } from "@/lib/orpc";
 import { ResumeContentForm } from "@/components/resumes/resume-content-form";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Button } from "@/components/ui/button";
 import { ResumeAnalyseTextForm } from "@/components/resumes/resume-analyse-text-form";
+import { ResumeOptimizeTextForm } from "@/components/resumes/resume-optmize-text-form";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -49,14 +48,12 @@ export default async function ResumeContentPage({ params }: PageProps) {
         </div>
         <ButtonGroup>
           <ResumeAnalyseTextForm id={id} />
-          <Button variant="outline">Optimize</Button>
+          <ResumeOptimizeTextForm resumeId={id} />
         </ButtonGroup>
       </div>
 
       <HydrateClient client={queryClient}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <ResumeContentForm resumeId={id} initialData={resume} />
-        </Suspense>
+        <ResumeContentForm resumeId={id} initialData={resume} />
       </HydrateClient>
     </div>
   );

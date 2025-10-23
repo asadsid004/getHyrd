@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Resume } from "@/router/onboarding/schema";
 import { generateResumePDF } from "@/lib/pdf-generator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { ResumeOptimisedAnalysisBased } from "./resume-optimised-analysis-based";
 
 type ResumeFullData = {
   name: string | null;
@@ -299,6 +300,13 @@ export function ResumeContentForm({
 
   return (
     <div className="flex flex-col gap-6">
+      {analyses.length > 0 && (
+        <ResumeOptimisedAnalysisBased
+          resumeId={resumeId}
+          resumeData={initialData}
+          AnalysisData={analyses[0].analysis}
+        />
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();

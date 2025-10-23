@@ -1,7 +1,7 @@
 import { extractResume, savePreferences } from "./onboarding/router";
 import { jobSearch } from "./job-search/router";
 import { getJobs } from "./jobs/router";
-import { getResumes, updateResumeData, getResume, analyseResumeFromFile, getResumeAnalyses, analyseResumeFromText } from "./resumes/router";
+import { getResumes, updateResumeData, getResume, analyseResumeFromFile, optimizeResumeFromFile, getResumeAnalyses, analyseResumeFromText, optimizeResumeFromText, optimizeResumeAnalysisBased } from "./resumes/router";
 
 /**
  * Contains all orpc routes
@@ -23,6 +23,9 @@ export const router = {
         getOne: getResume,
         analyse: analyseResumeFromFile,
         analyseText: analyseResumeFromText,
+        optimize: optimizeResumeFromFile,
+        optimizeText: optimizeResumeFromText,
+        optimizeAnalysisBased: optimizeResumeAnalysisBased,
         getAnalyses: getResumeAnalyses
     }
 }
