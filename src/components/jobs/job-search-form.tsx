@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { orpc } from "@/lib/orpc";
 import { useMutation } from "@tanstack/react-query";
+import { SearchIcon } from "lucide-react";
 
 export function JobSearchForm() {
   const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +37,13 @@ export function JobSearchForm() {
       >
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Spinner className="mr-2 h-4 w-4" />}
-          {isLoading ? "Searching..." : "Start Job Search"}
+          {isLoading ? (
+            "Searching..."
+          ) : (
+            <span className="flex items-center gap-2">
+              <SearchIcon /> Search
+            </span>
+          )}
         </Button>
       </form>
 

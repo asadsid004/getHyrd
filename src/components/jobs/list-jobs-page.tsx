@@ -44,7 +44,7 @@ export function ListJobsSection() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 mb-8">
       {!jobs || jobs.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-muted-foreground">
@@ -111,7 +111,7 @@ export function ListJobsSection() {
                   <span>{job.experienceLevel} level</span>
                   <span>
                     {job.postedAt
-                      ? new Date(job.postedAt).toLocaleDateString()
+                      ? new Date(job.postedAt).toLocaleDateString("en-GB")
                       : ""}
                   </span>
                 </div>
