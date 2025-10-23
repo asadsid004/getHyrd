@@ -45,7 +45,7 @@ export function PreferencesForm() {
   const router = useRouter();
 
   const savePreferencesMutation = useMutation(
-    orpc.onboarding.savePreferences.mutationOptions({
+    orpc.onboarding.save.mutationOptions({
       onSuccess: () => {
         toast.success("Preferences saved successfully!");
         router.push("/onboarding/resume");

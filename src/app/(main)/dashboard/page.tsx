@@ -6,7 +6,7 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireOnboarding } from "@/lib/auth-helpers";
-import { JobSearchForm } from "@/components/job-search-form";
+import { JobSearchForm } from "@/components/jobs/job-search-form";
 import {
   Card,
   CardContent,
@@ -88,7 +88,9 @@ const Dashboard = async () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">Start building your resume</p>
+            <p className="text-xs text-muted-foreground">
+              Start building your resume
+            </p>
           </CardContent>
         </Card>
         <Card className="gap-4">
@@ -105,9 +107,13 @@ const Dashboard = async () => {
             <CardTitle className="text-base">Profile Complete</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{session.user.onboardingCompleted ? "100%" : "75%"}</div>
+            <div className="text-2xl font-bold">
+              {session.user.onboardingCompleted ? "100%" : "75%"}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {session.user.onboardingCompleted ? "All set!" : "Complete your profile"}
+              {session.user.onboardingCompleted
+                ? "All set!"
+                : "Complete your profile"}
             </p>
           </CardContent>
         </Card>

@@ -11,7 +11,7 @@ export function JobSearchForm() {
   const [error, setError] = useState<string | null>(null);
 
   const jobSearchMutation = useMutation(
-    orpc.jobsearch.jobSearch.mutationOptions({
+    orpc.jobsearch.search.mutationOptions({
       onSuccess: (data) => {
         setMessage(data.message);
       },

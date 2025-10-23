@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 export function ResumeUploadForm() {
   const router = useRouter();
   const extractResumeMutation = useMutation(
-    orpc.onboarding.extractResume.mutationOptions({
+    orpc.onboarding.extract.mutationOptions({
       onSuccess: ({ message }) => {
         toast.success(message);
         router.push("/dashboard");
