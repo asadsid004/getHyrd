@@ -6,6 +6,8 @@ import { LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ButtonGroup } from "../ui/button-group";
+import { ThemeToggle } from "../theme-toggle";
 
 export function Logout() {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,16 +43,21 @@ export function Logout() {
   };
 
   return (
-    <Button variant="outline" onClick={handleLogout} disabled={isLoading}>
-      {isLoading ? (
-        <>
-          Logging out... <Loader2 className="size-4 animate-spin" />
-        </>
-      ) : (
-        <>
-          Logout <LogOut className="size-4" />
-        </>
-      )}
-    </Button>
+    <ButtonGroup>
+      <Button asChild>
+        <ThemeToggle />
+      </Button>
+      <Button variant="outline" onClick={handleLogout} disabled={isLoading}>
+        {isLoading ? (
+          <>
+            Logging out... <Loader2 className="size-4 animate-spin" />
+          </>
+        ) : (
+          <>
+            Logout <LogOut className="size-4" />
+          </>
+        )}
+      </Button>
+    </ButtonGroup>
   );
 }
