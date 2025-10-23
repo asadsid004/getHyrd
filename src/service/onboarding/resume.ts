@@ -121,7 +121,7 @@ The extracted JSON must strictly follow this structure:
   console.log('Resume file received', { file: resumeFileName })
 
   const response = await generateObject({
-    model: google('gemini-2.0-flash'),
+    model: google('gemini-2.5-flash'),
     messages: [
       {
         role: "user",

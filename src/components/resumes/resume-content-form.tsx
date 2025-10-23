@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +75,10 @@ export function ResumeContentForm({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const { data: analyses } = useSuspenseQuery(
+    orpc.resumes.getAnalyses.queryOptions({ input: { id: resumeId } })
+  );
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
@@ -1083,14 +1091,16 @@ export function ResumeContentForm({
               </Button>
             </div>
             <div className="mx-auto lg:col-span-1 max-w-2xl">
-              <Card className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+              {/* <Card className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto"> */}
+              <Card className="sticky">
                 <CardContent className="p-8" id="resume-preview-content">
                   <form.Subscribe selector={(state) => [state.values]}>
                     {([values]) => (
-                      <div className="space-y-4 text-xs leading-tight font-serif">
+                      // <div className="space-y-4 text-xs leading-tight font-serif">
+                      <div className="space-y-4 text-xs tracking-wider font-serif">
                         {/* Header */}
                         <div className="text-center border-b-2 border-muted-foreground pb-2">
-                          <h1 className="text-2xl font-bold tracking-tight mb-1">
+                          <h1 className="text-2xl font-bold mb-1">
                             {values.name || "Your Name"}
                           </h1>
                           <div className="text-sm text-muted-foreground">
@@ -1118,7 +1128,7 @@ export function ResumeContentForm({
                             <h2 className="text-sm font-bold mb-1.5">
                               PROFESSIONAL SUMMARY
                             </h2>
-                            <p className="text-xs leading-relaxed text-justify">
+                            <p className="text-xs text-justify">
                               {values.summary}
                             </p>
                           </div>
@@ -1377,36 +1387,250 @@ export function ResumeContentForm({
           </TabsContent>
           <TabsContent value="analysis" className="w-full">
             {/* Resume Analysis */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="h-5 w-5" />
-                  Resume Analysis
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Get AI-powered insights to improve your resume
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
-                    <Plus className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    No Analysis Yet
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Get personalized feedback on your resume content, keyword
-                    optimization, and suggestions to improve your chances of
-                    getting interviews.
-                  </p>
-                  <Button className="px-8">
-                    <Save className="h-4 w-4 mr-2" />
-                    Analyze Resume
-                  </Button>
+            <div className="space-y-6">
+              {/* New Analysis Form */}
+              {!analyses.length && (
+                <div className="text-center mt-10 font-semibold text-muted-foreground">
+                  No analysis found for this resume
                 </div>
-              </CardContent>
-            </Card>
+              )}
+              {/* Existing Analyses */}
+              {analyses && analyses.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Analysis</h3>
+                  {analyses.map((analysis) => (
+                    <Card key={analysis.id}>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>Analysis for {analysis.role}</span>
+                          <span className="text-sm font-normal text-muted-foreground">
+                            {analysis.createdAt
+                              ? new Date(
+                                  analysis.createdAt
+                                ).toLocaleDateString()
+                              : "Unknown"}
+                          </span>
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Overall Score: {analysis.analysis.overallScore}/10
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {analysis.analysis.ats.score}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              ATS
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">
+                              {analysis.analysis.jobMatch.score}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Job Match
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {analysis.analysis.writingAndFormatting.score}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Writing
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600">
+                              {analysis.analysis.keywordCoverage.score}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Keywords
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-semibold mb-2">
+                              ATS Compatibility
+                            </h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {analysis.analysis.ats.summary}
+                            </p>
+                            <ul className="space-y-1">
+                              {analysis.analysis.ats.feedback.map(
+                                (item, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-sm flex items-start gap-2"
+                                  >
+                                    <span
+                                      className={`inline-block w-2 h-2 rounded-full mt-1.5 ${
+                                        item.type === "strength"
+                                          ? "bg-green-500"
+                                          : item.type === "minor-improvement"
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></span>
+                                    <div>
+                                      <span className="font-medium">
+                                        {item.name}:
+                                      </span>{" "}
+                                      {item.message}
+                                    </div>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold mb-2">Job Match</h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {analysis.analysis.jobMatch.summary}
+                            </p>
+                            <ul className="space-y-1">
+                              {analysis.analysis.jobMatch.feedback.map(
+                                (item, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-sm flex items-start gap-2"
+                                  >
+                                    <span
+                                      className={`inline-block w-2 h-2 rounded-full mt-1.5 ${
+                                        item.type === "strength"
+                                          ? "bg-green-500"
+                                          : item.type === "minor-improvement"
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></span>
+                                    <div>
+                                      <span className="font-medium">
+                                        {item.name}:
+                                      </span>{" "}
+                                      {item.message}
+                                    </div>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold mb-2">Writing</h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {analysis.analysis.writingAndFormatting.summary}
+                            </p>
+                            <ul className="space-y-1">
+                              {analysis.analysis.writingAndFormatting.feedback.map(
+                                (item, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-sm flex items-start gap-2"
+                                  >
+                                    <span
+                                      className={`inline-block w-2 h-2 rounded-full mt-1.5 ${
+                                        item.type === "strength"
+                                          ? "bg-green-500"
+                                          : item.type === "minor-improvement"
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></span>
+                                    <div>
+                                      <span className="font-medium">
+                                        {item.name}:
+                                      </span>{" "}
+                                      {item.message}
+                                    </div>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold mb-2">
+                              Keyword Coverage
+                            </h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {analysis.analysis.keywordCoverage.summary}
+                            </p>
+                            <ul className="space-y-1">
+                              {analysis.analysis.keywordCoverage.feedback.map(
+                                (item, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-sm flex items-start gap-2"
+                                  >
+                                    <span
+                                      className={`inline-block w-2 h-2 rounded-full mt-1.5 ${
+                                        item.type === "strength"
+                                          ? "bg-green-500"
+                                          : item.type === "minor-improvement"
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></span>
+                                    <div>
+                                      <span className="font-medium">
+                                        {item.name}:
+                                      </span>{" "}
+                                      {item.message}
+                                    </div>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+
+                          {analysis.analysis.other && (
+                            <div>
+                              <h4 className="font-semibold mb-2">
+                                Other Feedback
+                              </h4>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {analysis.analysis.other.summary}
+                              </p>
+                              <ul className="space-y-1">
+                                {analysis.analysis.other.feedback.map(
+                                  (item, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="text-sm flex items-start gap-2"
+                                    >
+                                      <span
+                                        className={`inline-block w-2 h-2 rounded-full mt-1.5 ${
+                                          item.type === "strength"
+                                            ? "bg-green-500"
+                                            : item.type === "minor-improvement"
+                                            ? "bg-yellow-500"
+                                            : "bg-red-500"
+                                        }`}
+                                      ></span>
+                                      <div>
+                                        <span className="font-medium">
+                                          {item.name}:
+                                        </span>{" "}
+                                        {item.message}
+                                      </div>
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </form>

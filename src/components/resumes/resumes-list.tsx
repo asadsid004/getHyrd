@@ -38,6 +38,7 @@ interface Resume {
   mimeType: string;
   uploadDate: Date | null;
   isPrimary: boolean;
+  score: number | null;
   createdAt: Date;
   updatedAt: Date;
   resumeData: {
@@ -255,6 +256,14 @@ export function ResumesList() {
                       >
                         <Star className="h-3 w-3" />
                         Primary
+                      </Badge>
+                    )}
+                    {resume.score !== null && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        Score: {resume.score}/10
                       </Badge>
                     )}
                   </CardTitle>

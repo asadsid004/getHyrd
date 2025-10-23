@@ -5,6 +5,7 @@ import { orpc } from "@/lib/orpc";
 import { ResumeContentForm } from "@/components/resumes/resume-content-form";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
+import { ResumeAnalyseTextForm } from "@/components/resumes/resume-analyse-text-form";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -22,6 +23,11 @@ export default async function ResumeContentPage({ params }: PageProps) {
   // Prefetch resume data
   await queryClient.prefetchQuery(
     orpc.resumes.getOne.queryOptions({ input: { id } })
+  );
+
+  // Prefetch analyses data
+  await queryClient.prefetchQuery(
+    orpc.resumes.getAnalyses.queryOptions({ input: { id } })
   );
 
   const resume = queryClient.getQueryData(
@@ -42,7 +48,7 @@ export default async function ResumeContentPage({ params }: PageProps) {
           </p>
         </div>
         <ButtonGroup>
-          <Button variant="outline">Analyze</Button>
+          <ResumeAnalyseTextForm id={id} />
           <Button variant="outline">Optimize</Button>
         </ButtonGroup>
       </div>

@@ -3,6 +3,7 @@ import { getQueryClient, HydrateClient } from "@/lib/query/hydration";
 import { orpc } from "@/lib/orpc";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
+import { ResumeAnalyseForm } from "@/components/resumes/resume-analyse-form";
 
 export default async function ResumesPage() {
   const queryClient = getQueryClient();
@@ -22,18 +23,14 @@ export default async function ResumesPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-8">
         <div>
           <h1 className="text-4xl font-bold tracking-tight">Resumes</h1>
           <p className="text-xl text-muted-foreground">Manage your resumes</p>
         </div>
         <ButtonGroup aria-label="Resume actions">
-          <Button variant="outline" size="lg">
-            Analyze
-          </Button>
-          <Button variant="outline" size="lg">
-            Create
-          </Button>
+          <ResumeAnalyseForm />
+          <Button variant="outline">Create</Button>
         </ButtonGroup>
       </div>
 
