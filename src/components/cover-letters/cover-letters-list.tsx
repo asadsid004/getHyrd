@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { CoverLetterDelete } from "./cover-letter-delete";
+import { Badge } from "../ui/badge";
 
 type SortType = "newest" | "oldest" | "name";
 
@@ -35,6 +36,7 @@ interface CoverLetter {
   recipientCompany: string | null;
   recipientPosition: string | null;
   recipientName: string | null;
+  score: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -201,6 +203,14 @@ export function CoverLettersList() {
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
                       {coverLetter.title}
+                      {coverLetter.score !== null && (
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          Score: {coverLetter.score}/10
+                        </Badge>
+                      )}
                     </CardTitle>
                   </div>
                   <div className="flex items-center gap-4">

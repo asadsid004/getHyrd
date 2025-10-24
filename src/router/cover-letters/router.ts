@@ -40,6 +40,7 @@ export const getCoverLetters = authed
         salutation: z.string().nullable(),
         closingStatement: z.string().nullable(),
         senderName: z.string().nullable(),
+        score: z.number().nullable(),
         createdAt: z.date(),
         updatedAt: z.date(),
     })))
@@ -56,6 +57,7 @@ export const getCoverLetters = authed
                 salutation: coverLetters.salutation,
                 closingStatement: coverLetters.closingStatement,
                 senderName: coverLetters.senderName,
+                score: coverLetters.score,
                 createdAt: coverLetters.createdAt,
                 updatedAt: coverLetters.updatedAt,
             })
@@ -75,6 +77,7 @@ export const getCoverLetters = authed
             salutation: coverLetter.salutation,
             closingStatement: coverLetter.closingStatement,
             senderName: coverLetter.senderName,
+            score: coverLetter.score,
             createdAt: coverLetter.createdAt ?? new Date(),
             updatedAt: coverLetter.updatedAt ?? new Date(),
         }));
@@ -339,6 +342,7 @@ export const analyseCoverLetterFromFile = authed
                     salutation: extractedSections.salutation,
                     closingStatement: extractedSections.closingStatement,
                     senderName: extractedSections.sender,
+                    score: rest.overallScore
                 })
                 .returning();
 
@@ -388,7 +392,6 @@ export const analyseCoverLetterFromText = authed
 
         console.log("Analysed cover letter", analysedData.object);
 
-
         await db.insert(coverLetterAnalyses)
             .values({
                 coverLetterId,
@@ -396,6 +399,12 @@ export const analyseCoverLetterFromText = authed
                 description,
                 analysis
             })
+
+        await db.update(coverLetters)
+            .set({
+                score: analysis.overallScore
+            })
+            .where(eq(coverLetters.id, coverLetterId));
     });
 
 export const getCoverLetterAnalyses = authed

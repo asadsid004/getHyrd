@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { relations } from "drizzle-orm";
 import { aiCoverLetterAnalyzeSchema } from "../../service/cover-letter/analyse";
@@ -24,6 +24,8 @@ export const coverLetters = pgTable("cover_letters", {
     senderName: text("sender_name"),
     senderEmail: text("sender_email"),
     senderPhone: text("sender_phone"),
+
+    score: integer("score"),
 
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
