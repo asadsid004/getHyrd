@@ -80,7 +80,7 @@ export const CoverLetterCreateForm = () => {
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
         <Button variant="outline">
-          Create <PlusIcon className="h-4 w-4 ml-2" />
+          Create <PlusIcon className="h-4 w-4" />
         </Button>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-lg">

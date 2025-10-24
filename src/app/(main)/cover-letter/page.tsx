@@ -3,6 +3,7 @@ import { getQueryClient, HydrateClient } from "@/lib/query/hydration";
 import { orpc } from "@/lib/orpc";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { CoverLetterCreateForm } from "@/components/cover-letters/cover-letter-create-form";
+import { CoverLetterAnalyseForm } from "@/components/cover-letters/cover-letter-analyse-form";
 
 export default async function CoverLetterPage() {
   const queryClient = getQueryClient();
@@ -21,6 +22,7 @@ export default async function CoverLetterPage() {
           </p>
         </div>
         <ButtonGroup aria-label="Cover letter actions">
+          <CoverLetterAnalyseForm />
           <CoverLetterCreateForm />
         </ButtonGroup>
       </div>

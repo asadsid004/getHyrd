@@ -7,6 +7,8 @@ import { headers } from "next/headers";
 import { userProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { CoverLetterTextAnalyseForm } from "@/components/cover-letters/cover-letter-analyse-text-form";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -46,6 +48,10 @@ export default async function CoverLetterContentPage({ params }: PageProps) {
     orpc.coverLetters.getOne.queryOptions({ input: { id } })
   );
 
+  await queryClient.prefetchQuery(
+    orpc.coverLetters.getAnalyses.queryOptions({ input: { id } })
+  );
+
   const coverLetter = queryClient.getQueryData(
     orpc.coverLetters.getOne.queryOptions({ input: { id } }).queryKey
   );
@@ -65,6 +71,9 @@ export default async function CoverLetterContentPage({ params }: PageProps) {
             Update your cover letter information and content
           </p>
         </div>
+        <ButtonGroup>
+          <CoverLetterTextAnalyseForm coverLetterId={id} />
+        </ButtonGroup>
       </div>
 
       <HydrateClient client={queryClient}>

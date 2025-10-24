@@ -76,7 +76,7 @@ export async function generateResumePDF(elementId: string, fileName: string) {
     // Create a clone to modify for PDF
     const clone = element.cloneNode(true) as HTMLElement;
     clone.style.width = '210mm'; // A4 width
-    clone.style.padding = '15mm';
+    // clone.style.padding = '15mm';
     clone.style.backgroundColor = 'white';
 
     // Temporarily add to document for rendering

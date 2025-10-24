@@ -1,6 +1,7 @@
 import { db } from "@/db/drizzle";
-import { coverLetters, userProfiles } from "@/db/schema";
+import { coverLetterAnalyses, coverLetters, userProfiles } from "@/db/schema";
 import { authed } from "@/middlewares/auth";
+import { aiCoverLetterAnalyzeSchema, AnalyseCoverLetterFileData, analyseCoverLetterFileData, analyseCoverLetterText } from "@/service/cover-letter/analyse";
 import { CoverLetter } from "@/service/cover-letter/create";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -267,3 +268,143 @@ export const deleteCoverLetter = authed
 
         return { success: true };
     });
+
+export const analyseCoverLetterFromFile = authed
+    .route({
+        method: "POST",
+        path: "/cover-letters/:id/analyse-file",
+        summary: "Analyse cover letter from file",
+        tags: ["cover-letters"]
+    })
+    .input(z.object({
+        role: z.string(),
+        description: z.string(),
+        coverLetterData: z.string(),
+    }))
+    .output(z.object({
+        id: z.string(),
+    }))
+    .handler(async ({ input, context }) => {
+        const { role, description, coverLetterData } = input;
+
+        if (!role || !description || !coverLetterData) {
+            throw new Error("Invalid input");
+        }
+
+        const analysedData = await analyseCoverLetterFileData(role, description, coverLetterData);
+
+        const { extractedSections, ...rest } = analysedData.object as AnalyseCoverLetterFileData;
+
+        console.log("Analysed cover letter", analysedData.object);
+
+        return await db.transaction(async (tx) => {
+            const [coverLetter] = await tx
+                .insert(coverLetters)
+                .values({
+                    userId: context.user.id,
+                    title: "Analysed cover letter",
+                    content: JSON.stringify(rest),
+                    recipientCompany: extractedSections.company,
+                    recipientPosition: extractedSections.recipientPosition,
+                    recipientName: extractedSections.recipientName,
+                    subject: extractedSections.subject,
+                    salutation: extractedSections.salutation,
+                    closingStatement: extractedSections.closingStatement,
+                    senderName: extractedSections.sender,
+                })
+                .returning();
+
+            await tx.insert(coverLetterAnalyses)
+                .values({
+                    coverLetterId: coverLetter.id,
+                    role,
+                    description,
+                    analysis: rest
+                })
+                .returning()
+
+            return {
+                id: coverLetter.id,
+            };
+        });
+    });
+
+export const analyseCoverLetterFromText = authed
+    .route({
+        method: "POST",
+        path: "/cover-letters/:id/analyse-text",
+        summary: "Analyse cover letter from text",
+        tags: ["cover-letters"]
+    })
+    .input(z.object({
+        role: z.string(),
+        description: z.string(),
+        coverLetterId: z.string(),
+    }))
+    .handler(async ({ input }) => {
+        const { role, description, coverLetterId } = input;
+
+        if (!role || !description || !coverLetterId) {
+            throw new Error("Invalid input");
+        }
+
+        const coverLetter = await db.select().from(coverLetters).where(eq(coverLetters.id, coverLetterId)).limit(1);
+
+        if (!coverLetter.length) {
+            throw new Error("Cover letter not found");
+        }
+
+        const analysedData = await analyseCoverLetterText(role, description, coverLetter[0].content);
+
+        const analysis = analysedData.object as AnalyseCoverLetterFileData;
+
+        console.log("Analysed cover letter", analysedData.object);
+
+
+        await db.insert(coverLetterAnalyses)
+            .values({
+                coverLetterId,
+                role,
+                description,
+                analysis
+            })
+    });
+
+export const getCoverLetterAnalyses = authed
+    .route({
+        method: "GET",
+        path: "/cover-letters/:id/analyses",
+        summary: "Get analyses for a cover letter",
+        tags: ["cover-letters"]
+    })
+    .input(z.object({
+        id: z.string(),
+    }))
+    .output(z.object({
+        role: z.string(),
+        analysis: aiCoverLetterAnalyzeSchema,
+        createdAt: z.date().nullable()
+    }).nullable())
+    .handler(async ({ input }) => {
+        const { id } = input;
+
+        const analyses = await db
+            .select()
+            .from(coverLetterAnalyses)
+            .where(eq(coverLetterAnalyses.coverLetterId, id))
+            .orderBy(coverLetterAnalyses.createdAt)
+            .limit(1)
+
+        if (!analyses.length) {
+            return null;
+        }
+
+        const data = {
+            role: analyses[0].role,
+            analysis: analyses[0].analysis as AnalyseCoverLetterFileData,
+            createdAt: analyses[0].createdAt as Date
+        }
+
+        return data;
+    });
+

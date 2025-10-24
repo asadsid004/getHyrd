@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Loader2, Download } from "lucide-react";
+import { Save, Loader2, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { generateCoverLetterPDF } from "@/lib/pdf-generator";
 import { UserProfile } from "@/db/schema/profile-schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getQueryClient } from "@/lib/query/hydration";
 
 type CoverLetterData = {
   id: string;
@@ -51,9 +52,13 @@ export function CoverLetterContentForm({
   initialData,
   user,
 }: CoverLetterContentFormProps) {
-  const queryClient = useQueryClient();
+  const queryClient = getQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const { data: analyses } = useSuspenseQuery(
+    orpc.coverLetters.getAnalyses.queryOptions({ input: { id: coverLetterId } })
+  );
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
@@ -75,9 +80,14 @@ export function CoverLetterContentForm({
     orpc.coverLetters.update.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.coverLetters.getOne.queryOptions({
+          queryKey: orpc.coverLetters.getOne.queryKey({
             input: { id: coverLetterId },
-          }).queryKey,
+          }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.coverLetters.getAnalyses.queryKey({
+            input: { id: coverLetterId },
+          }),
         });
         toast.success("Cover letter updated successfully!");
         setIsSubmitting(false);
@@ -479,7 +489,188 @@ export function CoverLetterContentForm({
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="analysis"></TabsContent>
+          <TabsContent value="analysis" className="w-full">
+            {/* Cover Letter Analysis */}
+            <div className="space-y-6">
+              {/* New Analysis Form */}
+              {!analyses && (
+                <Card className="text-center mt-10 font-semibold text-muted-foreground">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="text-6xl">
+                      <FileText className="h-10 w-10" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold">No Analysis Yet</h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        Get AI-powered feedback on your cover letter by
+                        analyzing it against job descriptions. Click the
+                        &quot;Analyze&quot; button in the header to get started.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+              {/* Existing Analyses */}
+              {/* Existing Analyses */}
+              {analyses && (
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold tracking-tight text-foreground">
+                    Analysis Overview
+                  </h3>
+
+                  <Card className="border border-border/60 shadow-sm">
+                    <CardHeader className="border-b border-border/50 pb-3">
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="text-lg font-semibold text-primary">
+                          Analysis for {analyses.role}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {analyses.createdAt
+                            ? new Date(analyses.createdAt).toLocaleDateString(
+                                "en-GB"
+                              )
+                            : "Unknown"}
+                        </span>
+                      </CardTitle>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Overall Score:{" "}
+                        <span className="text-foreground font-semibold">
+                          {analyses.analysis.overallScore}/10
+                        </span>
+                      </p>
+                    </CardHeader>
+
+                    <CardContent className="space-y-6 pt-5">
+                      {/* Top Scores Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                          {
+                            label: "Relevance",
+                            score: analyses.analysis.relevance.score,
+                            color: "text-blue-600",
+                          },
+                          {
+                            label: "Tone & Language",
+                            score: analyses.analysis.toneAndLanguage.score,
+                            color: "text-green-600",
+                          },
+                          {
+                            label: "Structure",
+                            score: analyses.analysis.structureAndFlow.score,
+                            color: "text-purple-600",
+                          },
+                          {
+                            label: "Personalization",
+                            score: analyses.analysis.personalization.score,
+                            color: "text-orange-600",
+                          },
+                        ].map(({ label, score, color }, i) => (
+                          <div key={i} className="text-center">
+                            <div className={`text-3xl font-bold ${color}`}>
+                              {score}
+                            </div>
+                            <div className="text-sm font-medium text-muted-foreground">
+                              {label}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Feedback Sections */}
+                      <div className="space-y-6">
+                        {[
+                          {
+                            key: "relevance",
+                            title: "Relevance",
+                            color: "border-blue-500",
+                          },
+                          {
+                            key: "toneAndLanguage",
+                            title: "Tone & Language",
+                            color: "border-green-500",
+                          },
+                          {
+                            key: "structureAndFlow",
+                            title: "Structure & Flow",
+                            color: "border-purple-500",
+                          },
+                          {
+                            key: "personalization",
+                            title: "Personalization",
+                            color: "border-orange-500",
+                          },
+                          {
+                            key: "other",
+                            title: "Other Feedback",
+                            color: "border-gray-400",
+                            optional: true,
+                          },
+                        ].map(({ key, title, color, optional }) => {
+                          const section =
+                            analyses.analysis[
+                              key as keyof typeof analyses.analysis
+                            ];
+                          if (
+                            optional &&
+                            (!section || typeof section !== "object")
+                          )
+                            return null;
+                          if (!optional && typeof section !== "object")
+                            return null;
+                          const sectionObj = section as {
+                            score: number;
+                            summary: string;
+                            feedback: {
+                              type: string;
+                              name: string;
+                              message: string;
+                            }[];
+                          };
+                          return (
+                            <div
+                              key={key}
+                              className={`border-l-4 ${color} pl-4 space-y-2`}
+                            >
+                              <h4 className="text-base font-semibold text-foreground">
+                                {title}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {sectionObj.summary}
+                              </p>
+                              <ul className="space-y-1.5">
+                                {sectionObj.feedback.map((item, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-sm flex items-start gap-2"
+                                  >
+                                    <span
+                                      className={`mt-1 inline-block flex-shrink-0 rounded-full w-2.5 h-2.5 ${
+                                        item.type === "strength"
+                                          ? "bg-green-500"
+                                          : item.type === "minor-improvement"
+                                          ? "bg-yellow-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    />
+                                    <div>
+                                      <span className="font-medium">
+                                        {item.name}:
+                                      </span>{" "}
+                                      {item.message}
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
       </form>
     </div>

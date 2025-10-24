@@ -98,6 +98,7 @@ Also return an overall score for the resume from 1-10 based on your analysis.
 Only return the structured JSON response as defined by the schema. Do not include explanations, markdown, or extra commentary outside the defined format.
 
 Other Guidelines:
+- Don't judge the resume based on any dates included inside it.
 - Tailor your analysis and feedback to the specific job description and experience level provided.
 - Be clear, constructive, and actionable. The goal is to help the candidate improve their resume so it is ok to be critical.
 - Refer to the candidate as "you" in your feedback. This feedback should be written as if you were speaking directly to the candidate.
@@ -147,7 +148,7 @@ Each category must include:
   - \`message\`: detailed explanation or actionable advice
 
 Finally, give an overall score (1–10) based on all factors.
-
+Don't judge the resume based on any dates included inside it.
 Write feedback directly addressing the candidate ("you"), with clear, practical advice.  
 Avoid unnecessary politeness or fluff — keep it professional and useful.
 
