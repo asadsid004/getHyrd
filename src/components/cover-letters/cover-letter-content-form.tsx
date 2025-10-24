@@ -15,8 +15,9 @@ import { generateCoverLetterPDF } from "@/lib/pdf-generator";
 import { UserProfile } from "@/db/schema/profile-schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getQueryClient } from "@/lib/query/hydration";
+import { CoverLetterOptimisedAnalysisBased } from "./cover-optimise-analysis-based";
 
-type CoverLetterData = {
+export type CoverLetterData = {
   id: string;
   title: string;
   content: string;
@@ -34,16 +35,19 @@ type CoverLetterData = {
 
 interface CoverLetterContentFormProps {
   coverLetterId: string;
-  initialData: Omit<
-    CoverLetterData,
-    "id" | "createdAt" | "updatedAt" | "jobDescription"
-  > | null;
+  initialData:
+    | (CoverLetterData & {
+        senderEmail: string;
+        senderPhone: string;
+      })
+    | null;
   user: Omit<
     UserProfile,
     "userId" | "primaryResumeId" | "createdAt" | "updatedAt"
   > & {
     name: string;
     email: string;
+    phone: string;
   };
 }
 
@@ -111,6 +115,8 @@ export function CoverLetterContentForm({
       salutation: initialData?.salutation || "",
       closingStatement: initialData?.closingStatement || "",
       senderName: initialData?.senderName || user.name,
+      senderEmail: initialData?.senderEmail || user.email,
+      senderPhone: initialData?.senderPhone || "",
     },
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
@@ -125,6 +131,8 @@ export function CoverLetterContentForm({
         salutation: value.salutation || undefined,
         closingStatement: value.closingStatement || undefined,
         senderName: value.senderName || undefined,
+        senderEmail: value.senderEmail || undefined,
+        senderPhone: value.senderPhone || undefined,
       };
 
       await updateMutation.mutateAsync({
@@ -136,6 +144,13 @@ export function CoverLetterContentForm({
 
   return (
     <div className="flex flex-col gap-6">
+      {analyses && (
+        <CoverLetterOptimisedAnalysisBased
+          coverLetterId={coverLetterId}
+          coverLetterData={initialData}
+          AnalysisData={analyses.analysis}
+        />
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -353,6 +368,44 @@ export function CoverLetterContentForm({
                   </form.Field>
                 </CardContent>
               </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sender Email</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form.Field name="senderEmail">
+                    {(field) => (
+                      <div>
+                        <Input
+                          id={field.name}
+                          value={field.state.value || ""}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Your email for signature..."
+                        />
+                      </div>
+                    )}
+                  </form.Field>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sender Phone</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form.Field name="senderPhone">
+                    {(field) => (
+                      <div>
+                        <Input
+                          id={field.name}
+                          value={field.state.value || ""}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Your phone number for signature..."
+                        />
+                      </div>
+                    )}
+                  </form.Field>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
           <TabsContent value="preview">
@@ -399,15 +452,16 @@ export function CoverLetterContentForm({
                       {/* Header: Sender's Information */}
                       <div className="space-y-0">
                         <div className="font-bold">
-                          {(user.name as string) || "Your Full Name"}
+                          {(values.senderName as string) || "Your Full Name"}
                         </div>
-                        {user.phone && (
+                        {values.senderPhone && (
                           <div className="text-[10pt]">
-                            <span className="font-semibold">H</span>{" "}
-                            {user.phone}
+                            Phone: {values.senderPhone}
                           </div>
                         )}
-                        {user.email && <div>{user.email}</div>}
+                        {values.senderEmail && (
+                          <div>Email: {values.senderEmail}</div>
+                        )}
                       </div>
 
                       {/* Recipient Section */}
@@ -510,7 +564,6 @@ export function CoverLetterContentForm({
                   </div>
                 </Card>
               )}
-              {/* Existing Analyses */}
               {/* Existing Analyses */}
               {analyses && (
                 <div className="space-y-6">

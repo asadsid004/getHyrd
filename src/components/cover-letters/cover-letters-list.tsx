@@ -10,7 +10,6 @@ import {
   User,
   SortAsc,
   SortDesc,
-  Trash2,
 } from "lucide-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "../ui/button";
@@ -25,10 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { getQueryClient } from "@/lib/query/hydration";
-import { Spinner } from "../ui/spinner";
+import { CoverLetterDelete } from "./cover-letter-delete";
 
 type SortType = "newest" | "oldest" | "name";
 
@@ -52,21 +48,6 @@ export function CoverLettersList() {
 
   const [sort, setSort] = useState<SortType>("newest");
   const [search, setSearch] = useState("");
-
-  const queryClient = getQueryClient();
-
-  const deleteMutation = useMutation(
-    orpc.coverLetters.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries(orpc.coverLetters.get.queryOptions());
-        toast.success("Cover letter deleted successfully");
-      },
-      onError: (error) => {
-        toast.error("Failed to delete cover letter");
-        console.error("Delete error:", error);
-      },
-    })
-  );
 
   // Filter and sort cover letters
   const filteredAndSortedCoverLetters = useMemo(() => {
@@ -250,21 +231,7 @@ export function CoverLettersList() {
                       View
                     </Link>
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      deleteMutation.mutate({ id: coverLetter.id });
-                    }}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? (
-                      <Spinner />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <CoverLetterDelete id={coverLetter.id} size="sm" />
                 </div>
               </CardHeader>
               <CardContent>

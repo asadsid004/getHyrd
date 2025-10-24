@@ -76,7 +76,7 @@ export const CoverLetterAnalyseForm = () => {
     orpc.coverLetters.analyse.mutationOptions({
       onSuccess: (data) => {
         toast.success("Cover letter analysed successfully");
-        router.push(`/cover-letters/${data.id}`);
+        router.push(`/cover-letter/${data.id}`);
       },
       onError: (error) => {
         toast.error("Error analysing cover letter: " + error.cause);
@@ -170,7 +170,7 @@ export const CoverLetterAnalyseForm = () => {
                       label="Upload your cover letter here"
                       description="Drag and drop or click to browse"
                       allowedTypes={["application/pdf"]}
-                      maxSizeMB={10}
+                      maxSizeMB={15}
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />

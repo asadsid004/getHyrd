@@ -122,7 +122,7 @@ export function ResumeUploadForm() {
                       label="Upload your resume here"
                       description="Drag and drop or click to browse"
                       allowedTypes={["application/pdf"]}
-                      maxSizeMB={5}
+                      maxSizeMB={15}
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />

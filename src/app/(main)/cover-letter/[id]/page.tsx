@@ -9,6 +9,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { CoverLetterTextAnalyseForm } from "@/components/cover-letters/cover-letter-analyse-text-form";
+import { CoverLetterOptimizeTextForm } from "@/components/cover-letters/cover-letter-optimise-text-form";
+import { CoverLetterDelete } from "@/components/cover-letters/cover-letter-delete";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -60,6 +62,17 @@ export default async function CoverLetterContentPage({ params }: PageProps) {
     notFound();
   }
 
+  const initalData = {
+    ...coverLetter,
+    senderEmail: coverLetter.senderEmail as string,
+    senderPhone: coverLetter.senderPhone as string,
+  };
+
+  const initialUser = {
+    ...userData,
+    phone: userData.phone as string,
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-8 flex items-center justify-between">
@@ -73,14 +86,16 @@ export default async function CoverLetterContentPage({ params }: PageProps) {
         </div>
         <ButtonGroup>
           <CoverLetterTextAnalyseForm coverLetterId={id} />
+          <CoverLetterOptimizeTextForm coverLetterId={id} />
+          <CoverLetterDelete id={id} />
         </ButtonGroup>
       </div>
 
       <HydrateClient client={queryClient}>
         <CoverLetterContentForm
           coverLetterId={id}
-          initialData={coverLetter}
-          user={userData}
+          initialData={initalData}
+          user={initialUser}
         />
       </HydrateClient>
     </div>

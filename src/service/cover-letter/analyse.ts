@@ -58,6 +58,14 @@ export const aiCoverLetterFileAnalyzeSchema = z.object({
             .string()
             .optional()
             .describe("Full name of the candidate sending the cover letter."),
+        email: z
+            .string()
+            .optional()
+            .describe("Email of the candidate sending the cover letter. Must remain unchanged."),
+        phone: z
+            .string()
+            .optional()
+            .describe("Phone number of the candidate sending the cover letter. Must remain unchanged."),
         salutation: z
             .string()
             .optional()
@@ -202,6 +210,8 @@ Carefully extract the following details from the letter:
 - **recipientPosition** → The job title or position of the recipient (e.g., "Hiring Manager", "Recruiter").
 - **company** → The company name mentioned in the letter (e.g., "Google", "TechCorp").
 - **sender** → The full name of the candidate sending the letter (usually found in the signature).
+- **email** → The email of the candidate sending the letter (usually found in the signature).
+- **phone** → The phone number of the candidate sending the letter (usually found in the signature).
 - **salutation** → The greeting at the start (e.g., "Dear Mr. Doe," or "Dear Hiring Manager,").
 - **subject** → The subject or heading line (e.g., "Application for Software Engineer Role").
 - **content** → The main body paragraphs (between greeting and closing).

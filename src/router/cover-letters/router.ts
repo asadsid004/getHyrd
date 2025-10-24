@@ -3,8 +3,23 @@ import { coverLetterAnalyses, coverLetters, userProfiles } from "@/db/schema";
 import { authed } from "@/middlewares/auth";
 import { aiCoverLetterAnalyzeSchema, AnalyseCoverLetterFileData, analyseCoverLetterFileData, analyseCoverLetterText } from "@/service/cover-letter/analyse";
 import { CoverLetter } from "@/service/cover-letter/create";
+import { CoverLetterSchema, optimizeCoverLetterAnalysisBased, optimizeCoverLetterFromFile, optimizeCoverLetterTextData } from "@/service/cover-letter/optimize";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+
+type LetterDetails = {
+    recipientName: string;
+    recipientPosition: string;
+    company: string;
+    senderName: string;
+    senderEmail: string;
+    senderPhone: string;
+    salutation: string;
+    subject: string;
+    content: string;
+    closingStatement: string;
+};
+
 
 export const getCoverLetters = authed
     .route({
@@ -20,6 +35,7 @@ export const getCoverLetters = authed
         recipientCompany: z.string().nullable(),
         recipientPosition: z.string().nullable(),
         recipientName: z.string().nullable(),
+        jobDescription: z.string().nullable(),
         subject: z.string().nullable(),
         salutation: z.string().nullable(),
         closingStatement: z.string().nullable(),
@@ -54,6 +70,7 @@ export const getCoverLetters = authed
             recipientCompany: coverLetter.recipientCompany,
             recipientPosition: coverLetter.recipientPosition,
             recipientName: coverLetter.recipientName,
+            jobDescription: null,
             subject: coverLetter.subject,
             salutation: coverLetter.salutation,
             closingStatement: coverLetter.closingStatement,
@@ -80,10 +97,13 @@ export const getCoverLetter = authed
         recipientCompany: z.string().nullable(),
         recipientPosition: z.string().nullable(),
         recipientName: z.string().nullable(),
+        jobDescription: z.string().nullable(),
         subject: z.string().nullable(),
         salutation: z.string().nullable(),
         closingStatement: z.string().nullable(),
         senderName: z.string().nullable(),
+        senderEmail: z.string().nullable(),
+        senderPhone: z.string().nullable(),
         createdAt: z.date(),
         updatedAt: z.date(),
     }))
@@ -103,6 +123,8 @@ export const getCoverLetter = authed
                 salutation: coverLetters.salutation,
                 closingStatement: coverLetters.closingStatement,
                 senderName: coverLetters.senderName,
+                senderEmail: coverLetters.senderEmail,
+                senderPhone: coverLetters.senderPhone,
                 createdAt: coverLetters.createdAt,
                 updatedAt: coverLetters.updatedAt,
             })
@@ -126,10 +148,13 @@ export const getCoverLetter = authed
             recipientCompany: coverLetter[0].recipientCompany,
             recipientPosition: coverLetter[0].recipientPosition,
             recipientName: coverLetter[0].recipientName,
+            jobDescription: null,
             subject: coverLetter[0].subject,
             salutation: coverLetter[0].salutation,
             closingStatement: coverLetter[0].closingStatement,
             senderName: coverLetter[0].senderName,
+            senderEmail: coverLetter[0].senderEmail,
+            senderPhone: coverLetter[0].senderPhone,
             createdAt: coverLetter[0].createdAt ?? new Date(),
             updatedAt: coverLetter[0].updatedAt ?? new Date(),
         };
@@ -189,6 +214,7 @@ export const createCoverLetter = authed
             salutation: salutation || null,
             closingStatement: closingStatement || null,
             senderName: senderName || null,
+            senderEmail: context.user.email
         }).returning();
 
         return { id: coverLetter.id };
@@ -212,6 +238,8 @@ export const updateCoverLetter = authed
         salutation: z.string().nullable().optional(),
         closingStatement: z.string().nullable().optional(),
         senderName: z.string().nullable().optional(),
+        senderEmail: z.string().nullable().optional(),
+        senderPhone: z.string().nullable().optional(),
     }))
     .handler(async ({ input, context }) => {
         const { id, ...updates } = input;
@@ -408,3 +436,181 @@ export const getCoverLetterAnalyses = authed
         return data;
     });
 
+export const optimizeCoverLetterFromFileData = authed
+    .route({
+        method: "POST",
+        path: "/cover-letters/:id/optimize-file",
+        summary: "Optimize cover letter from file",
+        tags: ["cover-letters"]
+    })
+    .input(z.object({
+        role: z.string(),
+        description: z.string(),
+        coverLetterData: z.string(),
+    }))
+    .output(z.object({
+        id: z.string(),
+    }))
+    .handler(async ({ input, context }) => {
+        const { role, description, coverLetterData } = input;
+
+        if (!role || !description || !coverLetterData) {
+            throw new Error("Invalid input");
+        }
+
+        const optimizedData = await optimizeCoverLetterFromFile(role, description, coverLetterData);
+
+        const rest = optimizedData.object as LetterDetails;
+
+        console.log("Optimized cover letter", rest);
+
+
+        const [coverLetter] = await db
+            .insert(coverLetters)
+            .values({
+                userId: context.user.id,
+                title: input.role,
+                content: rest.content,
+                recipientCompany: rest.company,
+                recipientPosition: rest.recipientPosition,
+                recipientName: rest.recipientName,
+                subject: rest.subject,
+                salutation: rest.salutation,
+                closingStatement: rest.closingStatement,
+                senderName: rest.senderName,
+                senderEmail: rest.senderEmail,
+                senderPhone: rest.senderPhone,
+            })
+            .returning();
+
+        return {
+            id: coverLetter.id,
+        };
+    });
+
+export const optimizeCoverLetterFromText = authed
+    .route({
+        method: "POST",
+        path: "/cover-letters/:id/optimize-text",
+        summary: "Optimize cover letter from text",
+        tags: ["cover-letters"]
+    })
+    .input(z.object({
+        role: z.string(),
+        description: z.string(),
+        coverLetterId: z.string(),
+    }))
+    .handler(async ({ input, context }) => {
+        const { role, description, coverLetterId } = input;
+
+        if (!role || !description || !coverLetterId) {
+            throw new Error("Invalid input");
+        }
+
+        const coverLetter = await db.select().from(coverLetters).where(eq(coverLetters.id, coverLetterId)).limit(1);
+
+        if (!coverLetter.length) {
+            throw new Error("Cover letter not found");
+        }
+
+        const coverLetterData = {
+            id: coverLetter[0].id,
+            title: coverLetter[0].title,
+            content: coverLetter[0].content,
+            recipientCompany: coverLetter[0].recipientCompany,
+            recipientPosition: coverLetter[0].recipientPosition,
+            recipientName: coverLetter[0].recipientName,
+            jobDescription: null,
+            subject: coverLetter[0].subject,
+            salutation: coverLetter[0].salutation,
+            closingStatement: coverLetter[0].closingStatement,
+            senderName: coverLetter[0].senderName,
+            senderEmail: coverLetter[0].senderEmail as string,
+            senderPhone: coverLetter[0].senderPhone as string,
+            createdAt: coverLetter[0].createdAt || new Date(),
+            updatedAt: coverLetter[0].updatedAt || new Date(),
+        };
+
+        const optimizedData = await optimizeCoverLetterTextData(role, description, coverLetterData);
+
+        const rest = optimizedData.object as LetterDetails;
+
+        console.log("Optimized cover letter", optimizedData.object);
+
+        await db
+            .update(coverLetters)
+            .set({
+                userId: context.user.id,
+                title: input.role,
+                content: rest.content,
+                recipientCompany: rest.company,
+                recipientPosition: rest.recipientPosition,
+                recipientName: rest.recipientName,
+                subject: rest.subject,
+                salutation: rest.salutation,
+                closingStatement: rest.closingStatement,
+                senderName: rest.senderName,
+                senderEmail: rest.senderEmail,
+                senderPhone: rest.senderPhone,
+            })
+    });
+
+export const optimizeCoverLetterBasedonAnalysis = authed
+    .route({
+        method: "POST",
+        path: "/cover-letters/:id/optimize-analysis",
+        summary: "Optimize cover letter based on analysis",
+        tags: ["cover-letters"]
+    })
+    .input(z.object({
+        coverLetterId: z.string(),
+        analysisData: aiCoverLetterAnalyzeSchema,
+        coverLetterData: z.object({
+            ...CoverLetterSchema.shape,
+            title: z.string(),
+            id: z.string(),
+            content: z.string(), // Override to make required
+            recipientCompany: z.string().nullable(),
+            recipientPosition: z.string().nullable(),
+            recipientName: z.string().nullable(),
+            subject: z.string().nullable(),
+            salutation: z.string().nullable(),
+            closingStatement: z.string().nullable(),
+            senderName: z.string().nullable(),
+            jobDescription: z.string().nullable(),
+            senderEmail: z.string(),
+            senderPhone: z.string(),
+            createdAt: z.date(),
+            updatedAt: z.date(),
+        }),
+    }))
+    .handler(async ({ input, context }) => {
+        const { coverLetterId, analysisData, coverLetterData } = input;
+
+        if (!coverLetterId || !analysisData || !coverLetterData) {
+            throw new Error("Invalid input");
+        }
+
+        const optimizedData = await optimizeCoverLetterAnalysisBased(coverLetterData, analysisData);
+
+        const rest = optimizedData.object as LetterDetails;
+
+        console.log("Optimized cover letter", optimizedData.object);
+
+        await db
+            .update(coverLetters)
+            .set({
+                userId: context.user.id,
+                title: coverLetterData.title,
+                content: rest.content,
+                recipientCompany: rest.company,
+                recipientPosition: rest.recipientPosition,
+                recipientName: rest.recipientName,
+                subject: rest.subject,
+                salutation: rest.salutation,
+                closingStatement: rest.closingStatement,
+                senderName: rest.senderName,
+                senderEmail: rest.senderEmail,
+                senderPhone: rest.senderPhone,
+            })
+    });
