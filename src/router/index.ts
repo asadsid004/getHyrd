@@ -3,6 +3,7 @@ import { jobSearch } from "./job-search/router";
 import { getJobs } from "./jobs/router";
 import { getResumes, updateResumeData, getResume, analyseResumeFromFile, optimizeResumeFromFile, getResumeAnalyses, analyseResumeFromText, optimizeResumeFromText, optimizeResumeAnalysisBased, createResume, deleteResume } from "./resumes/router";
 import { getCoverLetters, getCoverLetter, createCoverLetter, updateCoverLetter, deleteCoverLetter, analyseCoverLetterFromFile, analyseCoverLetterFromText, getCoverLetterAnalyses, optimizeCoverLetterFromText, optimizeCoverLetterFromFileData, optimizeCoverLetterBasedonAnalysis } from "./cover-letters/router";
+import { createInterview } from "./interview/router";
 
 /**
  * Contains all orpc routes
@@ -43,5 +44,8 @@ export const router = {
         optimize: optimizeCoverLetterFromFileData,
         optimizeText: optimizeCoverLetterFromText,
         optimizeAnalysisBased: optimizeCoverLetterBasedonAnalysis
+    },
+    interview: {
+        create: createInterview
     }
 }
