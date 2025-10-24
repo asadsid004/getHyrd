@@ -146,3 +146,83 @@ export async function generateResumePDF(elementId: string, fileName: string) {
         throw error;
     }
 }
+
+export async function generateCoverLetterPDF(elementId: string, fileName: string) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        throw new Error('Cover letter element not found');
+    }
+
+    // Create a clone to modify for PDF
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.width = '210mm'; // A4 width
+    clone.style.padding = '15mm';
+    clone.style.backgroundColor = 'white';
+
+    // Temporarily add to document for rendering
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    document.body.appendChild(clone);
+
+    try {
+        // Add a style reset to force safe colors
+        const style = document.createElement('style');
+        style.textContent = `
+            * {
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                border-color: #000000 !important;
+                outline-color: #000000 !important;
+                text-decoration-color: #000000 !important;
+                box-shadow: none !important;
+                filter: none !important;
+            }
+        `;
+        clone.appendChild(style);
+
+        // Replace modern color functions with safe RGB fallbacks to prevent
+        // html2canvas error: "Attempting to parse an unsupported color function \"lab\""
+        sanitizeColorsDeep(clone);
+
+        const canvas = await html2canvas(clone, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            allowTaint: true,
+            removeContainer: true,
+            foreignObjectRendering: false,
+            backgroundColor: '#ffffff',
+        });
+
+        document.body.removeChild(clone);
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = 0;
+
+        pdf.addImage(
+            imgData,
+            'PNG',
+            imgX,
+            imgY,
+            imgWidth * ratio,
+            imgHeight * ratio
+        );
+
+        pdf.save(fileName);
+    } catch (error) {
+        document.body.removeChild(clone);
+        throw error;
+    }
+}

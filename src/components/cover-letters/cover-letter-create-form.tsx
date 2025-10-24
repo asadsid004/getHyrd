@@ -156,16 +156,18 @@ export const CoverLetterCreateForm = () => {
                   field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid} className="mb-4">
-                    <FieldLegend className="-mb-1">Position</FieldLegend>
+                    <FieldLegend className="-mb-1">
+                      Recipient Position
+                    </FieldLegend>
                     <FieldDescription className="mb-0">
-                      The job position you&apos;re applying for
+                      The job position of the recipient
                     </FieldDescription>
                     <FieldContent>
                       <Input
                         className=""
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="e.g., Senior Software Engineer"
+                        placeholder="e.g., Hiring Manager"
                       />
                     </FieldContent>
                     {isInvalid && (

@@ -19,7 +19,10 @@ export const getCoverLetters = authed
         recipientCompany: z.string().nullable(),
         recipientPosition: z.string().nullable(),
         recipientName: z.string().nullable(),
-        jobDescription: z.string().nullable(),
+        subject: z.string().nullable(),
+        salutation: z.string().nullable(),
+        closingStatement: z.string().nullable(),
+        senderName: z.string().nullable(),
         createdAt: z.date(),
         updatedAt: z.date(),
     })))
@@ -32,7 +35,10 @@ export const getCoverLetters = authed
                 recipientCompany: coverLetters.recipientCompany,
                 recipientPosition: coverLetters.recipientPosition,
                 recipientName: coverLetters.recipientName,
-                jobDescription: coverLetters.jobDescription,
+                subject: coverLetters.subject,
+                salutation: coverLetters.salutation,
+                closingStatement: coverLetters.closingStatement,
+                senderName: coverLetters.senderName,
                 createdAt: coverLetters.createdAt,
                 updatedAt: coverLetters.updatedAt,
             })
@@ -47,7 +53,10 @@ export const getCoverLetters = authed
             recipientCompany: coverLetter.recipientCompany,
             recipientPosition: coverLetter.recipientPosition,
             recipientName: coverLetter.recipientName,
-            jobDescription: coverLetter.jobDescription,
+            subject: coverLetter.subject,
+            salutation: coverLetter.salutation,
+            closingStatement: coverLetter.closingStatement,
+            senderName: coverLetter.senderName,
             createdAt: coverLetter.createdAt ?? new Date(),
             updatedAt: coverLetter.updatedAt ?? new Date(),
         }));
@@ -70,7 +79,10 @@ export const getCoverLetter = authed
         recipientCompany: z.string().nullable(),
         recipientPosition: z.string().nullable(),
         recipientName: z.string().nullable(),
-        jobDescription: z.string().nullable(),
+        subject: z.string().nullable(),
+        salutation: z.string().nullable(),
+        closingStatement: z.string().nullable(),
+        senderName: z.string().nullable(),
         createdAt: z.date(),
         updatedAt: z.date(),
     }))
@@ -86,7 +98,10 @@ export const getCoverLetter = authed
                 recipientCompany: coverLetters.recipientCompany,
                 recipientPosition: coverLetters.recipientPosition,
                 recipientName: coverLetters.recipientName,
-                jobDescription: coverLetters.jobDescription,
+                subject: coverLetters.subject,
+                salutation: coverLetters.salutation,
+                closingStatement: coverLetters.closingStatement,
+                senderName: coverLetters.senderName,
                 createdAt: coverLetters.createdAt,
                 updatedAt: coverLetters.updatedAt,
             })
@@ -110,7 +125,10 @@ export const getCoverLetter = authed
             recipientCompany: coverLetter[0].recipientCompany,
             recipientPosition: coverLetter[0].recipientPosition,
             recipientName: coverLetter[0].recipientName,
-            jobDescription: coverLetter[0].jobDescription,
+            subject: coverLetter[0].subject,
+            salutation: coverLetter[0].salutation,
+            closingStatement: coverLetter[0].closingStatement,
+            senderName: coverLetter[0].senderName,
             createdAt: coverLetter[0].createdAt ?? new Date(),
             updatedAt: coverLetter[0].updatedAt ?? new Date(),
         };
@@ -129,12 +147,14 @@ export const createCoverLetter = authed
         recipientPosition: z.string().optional(),
         recipientName: z.string().optional(),
         jobDescription: z.string().optional(),
+        salutation: z.string().optional(),
+        senderName: z.string().optional(),
     }))
     .output(z.object({
         id: z.string(),
     }))
     .handler(async ({ input, context }) => {
-        const { title, recipientCompany, recipientPosition, recipientName, jobDescription } = input;
+        const { title, recipientCompany, recipientPosition, recipientName, jobDescription, salutation, senderName } = input;
 
         if (!title) {
             throw new Error("Title is required");
@@ -148,14 +168,14 @@ export const createCoverLetter = authed
             email: context.user.email
         }
 
-        const content = (await CoverLetter({
+        const { subject, content, closingStatement } = (await CoverLetter({
             title,
             recipientCompany,
             recipientPosition,
             recipientName,
             jobDescription,
             resumeData: inputData,
-        })).text;
+        })).object;
 
         const [coverLetter] = await db.insert(coverLetters).values({
             userId: context.user.id,
@@ -164,7 +184,10 @@ export const createCoverLetter = authed
             recipientCompany: recipientCompany || null,
             recipientPosition: recipientPosition || null,
             recipientName: recipientName || null,
-            jobDescription: jobDescription || null,
+            subject: subject || null,
+            salutation: salutation || null,
+            closingStatement: closingStatement || null,
+            senderName: senderName || null,
         }).returning();
 
         return { id: coverLetter.id };
@@ -184,7 +207,10 @@ export const updateCoverLetter = authed
         recipientCompany: z.string().nullable().optional(),
         recipientPosition: z.string().nullable().optional(),
         recipientName: z.string().nullable().optional(),
-        jobDescription: z.string().nullable().optional(),
+        subject: z.string().nullable().optional(),
+        salutation: z.string().nullable().optional(),
+        closingStatement: z.string().nullable().optional(),
+        senderName: z.string().nullable().optional(),
     }))
     .handler(async ({ input, context }) => {
         const { id, ...updates } = input;

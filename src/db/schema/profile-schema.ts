@@ -74,3 +74,5 @@ export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
         references: [resumes.id],
     }),
 }));
+
+export type UserProfile = typeof userProfiles.$inferSelect;

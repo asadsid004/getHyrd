@@ -1,8 +1,7 @@
 import { ResumeSchema } from "@/router/onboarding/schema";
 import { z } from "zod";
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import { google } from "../models/ai";
-
 
 export const CoverLetter = async (input: {
     title: string;
@@ -12,48 +11,60 @@ export const CoverLetter = async (input: {
     jobDescription?: string;
     resumeData: z.infer<typeof ResumeSchema>;
 }) => {
-    const { title, recipientCompany, recipientPosition, recipientName, jobDescription, resumeData } = input;
+    const {
+        title,
+        recipientCompany,
+        recipientPosition,
+        recipientName,
+        jobDescription,
+        resumeData,
+    } = input;
 
     if (!title) throw new Error("Title is required");
 
-    return await generateText({
+    return await generateObject({
         model: google("gemini-2.5-flash"),
-        prompt: `You are an expert professional writer and hiring advisor specializing in resume-based personalization.
+        schema: z.object({
+            subject: z
+                .string()
+                .describe("Concise subject line (e.g., 'Application for Frontend Developer Role')"),
+            content: z
+                .string()
+                .describe("Main body of the cover letter (3–5 paragraphs, no greetings or closings)"),
+            closingStatement: z
+                .string()
+                .describe(
+                    "A short 1–2 sentence closing remark expressing enthusiasm and openness to further discussion."
+                ),
+        }),
+        prompt: `You are a professional HR writing assistant who crafts tailored cover letters that align perfectly with both the candidate’s experience and the target role.
 
-Your task is to write the **main body content** of a professional, compelling cover letter tailored to both the candidate's resume and the target job.
+Generate a structured JSON output containing:
+- A strong **subject line** (clear, concise, aligned with the job title).
+- Do not include the candidate name inside subject, content, closing statement.
+- A **main body content** with 3–5 cohesive paragraphs (no greetings or closings) that reflect:
+  - Motivation for the role and company.
+  - Alignment of the candidate’s skills with the job description.
+  - Key accomplishments or projects relevant to the position.
+  - Professional tone, human flow, and authenticity.
+- A **short closing statement** (e.g., “I’d welcome the opportunity to contribute to your team’s success.”)
 
-⚠️ DO NOT include greetings ("Dear ...") or closings ("Sincerely", "Best regards", or the candidate’s name).
+Avoid filler phrases, exaggerated language, or repetition. Make it feel like the candidate genuinely wrote it, using their resume and the job description as context.
 
 ---
 
-### OUTPUT REQUIREMENTS
-- Generate **only the body content** (3–5 short paragraphs, ~150–250 words).
-- Use a confident, sincere, and natural tone.
-- Avoid generic filler phrases and clichés.
-- Do not restate basic information like the candidate’s name, email, etc.
-- Focus on *fit, achievements, motivation,* and *relevance to the job*.
-- Reference specific skills, experience, or projects from the resume that are relevant to the given role and description.
-- Flow smoothly between paragraphs — make it feel human-written.
-- Ensure it aligns well with the **job description** while reflecting the candidate’s authentic background.
-- The result should feel written *by the candidate*, not about them.
+### Job Details
+- **Title:** ${title}
+- **Company:** ${recipientCompany || "N/A"}
+- **Hiring Position:** ${recipientPosition || "N/A"}
+- **Recruiter Name:** ${recipientName || "N/A"}
+- **Job Description:** ${jobDescription || "N/A"}
 
----
-
-### INPUT DATA
-
-**Job Details**
-- Title: ${title}
-- Company: ${recipientCompany || "N/A"}
-- Hiring Position: ${recipientPosition || "N/A"}
-- Recruiter Name: ${recipientName || "N/A"}
-- Job Description:
-${jobDescription || "N/A"}
-
-**Candidate Resume Summary**
+### Candidate Resume Summary
 ${JSON.stringify(resumeData, null, 2)}
 
 ---
 
-Now generate only the main content paragraphs of a polished, professional, personalized cover letter.`,
+Respond **only** with the structured JSON object: { subject, content, closingStatement }`,
     });
 };

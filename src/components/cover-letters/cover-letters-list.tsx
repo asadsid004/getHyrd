@@ -39,7 +39,6 @@ interface CoverLetter {
   recipientCompany: string | null;
   recipientPosition: string | null;
   recipientName: string | null;
-  jobDescription: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -212,97 +211,99 @@ export function CoverLettersList() {
 
       {/* Cover Letters List */}
       <div className="space-y-4">
-        {filteredAndSortedCoverLetters.map((coverLetter: CoverLetter) => (
-          <Card key={coverLetter.id}>
-            <CardHeader className="flex items-center justify-between">
-              <div className="flex flex-col items-start gap-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    {coverLetter.title}
-                  </CardTitle>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      Created{" "}
-                      {new Date(coverLetter.createdAt).toLocaleDateString(
-                        "en-GB"
-                      )}
+        {filteredAndSortedCoverLetters.map(
+          (coverLetter: Omit<CoverLetter, "jobDescription">) => (
+            <Card key={coverLetter.id}>
+              <CardHeader className="flex items-center justify-between">
+                <div className="flex flex-col items-start gap-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      {coverLetter.title}
+                    </CardTitle>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        Created{" "}
+                        {new Date(coverLetter.createdAt).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        Updated{" "}
+                        {new Date(coverLetter.updatedAt).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      Updated{" "}
-                      {new Date(coverLetter.updatedAt).toLocaleDateString(
-                        "en-GB"
-                      )}
-                    </div>
-                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/cover-letter/${coverLetter.id}`}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    View
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={() => {
-                    deleteMutation.mutate({ id: coverLetter.id });
-                  }}
-                  disabled={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending ? (
-                    <Spinner />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  {coverLetter.recipientCompany && (
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {coverLetter.recipientCompany}
-                      </span>
-                    </div>
-                  )}
-                  {coverLetter.recipientPosition && (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{coverLetter.recipientPosition}</span>
-                    </div>
-                  )}
-                  {coverLetter.recipientName && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span>{coverLetter.recipientName}</span>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/cover-letter/${coverLetter.id}`}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      View
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      deleteMutation.mutate({ id: coverLetter.id });
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Spinner />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    {coverLetter.recipientCompany && (
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {coverLetter.recipientCompany}
+                        </span>
+                      </div>
+                    )}
+                    {coverLetter.recipientPosition && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>{coverLetter.recipientPosition}</span>
+                      </div>
+                    )}
+                    {coverLetter.recipientName && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{coverLetter.recipientName}</span>
+                      </div>
+                    )}
+                  </div>
+                  {coverLetter.content && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Content Preview</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {coverLetter.content.substring(0, 200)}...
+                      </p>
                     </div>
                   )}
                 </div>
-                {coverLetter.content && (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Content Preview</p>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {coverLetter.content.substring(0, 200)}...
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          )
+        )}
       </div>
     </div>
   );
