@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { interviewAttempts, questionResponses, interviews } from "@/db/schema/interview-schema";
+import { interviewAttempts, questionResponses, interviews, interviewQuestions } from "@/db/schema/interview-schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { generateInterviewQuiz } from "@/service/interview/create";
@@ -86,6 +86,7 @@ export const getInterviews = authed
         const userId = context.user.id;
         const interviews = await db.query.interviews.findMany({
             where: (interviews, { eq }) => eq(interviews.userId, userId),
+            orderBy: (interviews, { desc }) => [desc(interviews.createdAt)],
         });
         return interviews;
     });
@@ -503,4 +504,79 @@ export const getReport = authed
             report,
             responses: sortedResponses,
         };
+    });
+
+export const deleteInterview = authed
+    .route({
+        method: "DELETE",
+        path: "/interviews/:id",
+        description: "Delete an interview",
+        tags: ["interview"],
+    })
+    .input(z.object({
+        id: z.string(),
+    }))
+    .output(z.object({
+        success: z.boolean(),
+    }))
+    .handler(async ({ input, context }) => {
+        const { id } = input;
+
+        // Verify ownership
+        const existing = await db
+            .select({ userId: interviews.userId })
+            .from(interviews)
+            .where(eq(interviews.id, id))
+            .limit(1);
+
+        if (!existing.length || existing[0].userId !== context.user.id) {
+            throw new Error("Interview not found or unauthorized");
+        }
+
+        // Delete in transaction to handle related data
+        await db.transaction(async (tx) => {
+            // Delete related attempts and responses first
+            const attempts = await tx
+                .select({ id: interviewAttempts.id })
+                .from(interviewAttempts)
+                .where(eq(interviewAttempts.interviewId, id));
+
+            for (const attempt of attempts) {
+                await tx
+                    .delete(questionResponses)
+                    .where(eq(questionResponses.attemptId, attempt.id));
+            }
+
+            await tx
+                .delete(interviewAttempts)
+                .where(eq(interviewAttempts.interviewId, id));
+
+            // Delete related reports and resources
+            const reports = await tx
+                .select({ id: interviewReports.id })
+                .from(interviewReports)
+                .where(eq(interviewReports.interviewId, id));
+
+            for (const report of reports) {
+                await tx
+                    .delete(learningResources)
+                    .where(eq(learningResources.reportId, report.id));
+            }
+
+            await tx
+                .delete(interviewReports)
+                .where(eq(interviewReports.interviewId, id));
+
+            // Delete related questions
+            await tx
+                .delete(interviewQuestions)
+                .where(eq(interviewQuestions.interviewId, id));
+
+            // Finally delete the interview
+            await tx
+                .delete(interviews)
+                .where(eq(interviews.id, id));
+        });
+
+        return { success: true };
     });

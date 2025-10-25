@@ -24,6 +24,7 @@ import {
 import { Badge } from "../ui/badge";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { InterviewDelete } from "./interview-delete";
 
 type Interview = {
   id: string;
@@ -197,7 +198,6 @@ export const InterviewList = () => {
         )}
 
         <div className="flex-1" />
-
         {interview.isAttempted ? (
           <Button
             variant="outline"
@@ -217,6 +217,7 @@ export const InterviewList = () => {
             </Link>
           </Button>
         )}
+        <InterviewDelete title={true} id={interview.id} />
       </CardContent>
     </Card>
   );
