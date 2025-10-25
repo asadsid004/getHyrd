@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, integer, uuid, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { user } from "./auth-schema";
 
 // Enum for difficulty levels
 export const difficultyEnum = pgEnum("difficulty", ["easy", "medium", "hard"]);
@@ -7,12 +8,15 @@ export const difficultyEnum = pgEnum("difficulty", ["easy", "medium", "hard"]);
 // Main interviews table
 export const interviews = pgTable("interviews", {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id").notNull(), // Reference to your user system
+    userId: text("user_id").references(() => user.id).notNull(),
     topic: text("topic").notNull(),
     description: text("description"),
     difficulty: difficultyEnum("difficulty").notNull().default("medium"),
     numQuestions: integer("num_questions").notNull(),
     timeLimit: integer("time_limit").notNull(), // in minutes
+    genDesc: text("gen_desc").notNull(),
+    score: integer("score").notNull().default(0),
+    correctAnswers: integer("correct_answers").notNull().default(0),
     isAttempted: boolean("is_attempted").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -60,7 +64,6 @@ export const questionResponses = pgTable("question_responses", {
         .references(() => interviewQuestions.id, { onDelete: "cascade" }),
     selectedOption: text("selected_option").notNull(), // "A", "B", "C", or "D"
     isCorrect: integer("is_correct").notNull(), // 1 for correct, 0 for incorrect (using integer as boolean)
-    answeredAt: timestamp("answered_at").defaultNow().notNull(),
 });
 
 // Relations

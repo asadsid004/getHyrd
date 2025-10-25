@@ -1,7 +1,10 @@
 import { authed } from "@/middlewares/auth";
 import { z } from "zod";
 import { generateInterviewQuiz } from "@/service/interview/create";
-import { saveInterviewWithQuestions } from "./helpers";
+import { saveInterviewWithQuestions, getInterviewWithQuestions } from "./helpers";
+import { interviewSchema, interviewWithQuestionsSchema } from "./schema";
+import { db } from "@/db/drizzle";
+
 
 export const createInterview = authed
     .route({
@@ -33,7 +36,17 @@ export const createInterview = authed
             numQuestions
         });
 
+        if (!quiz) {
+            throw new Error("Failed to generate quiz");
+        }
+
+        let genDesc = input.description ?? "";
+        if (quiz.generalDescription && quiz.generalDescription !== "" && quiz.generalDescription !== null) {
+            genDesc = quiz.generalDescription;
+        }
+
         console.log("Quiz generated with", quiz.questions.length, "questions");
+        console.log("General description:", genDesc);
 
         // Save interview to database
         const interview = await saveInterviewWithQuestions(
@@ -44,6 +57,7 @@ export const createInterview = authed
                 difficulty,
                 numQuestions,
                 timeLimit,
+                genDesc,
             },
             quiz
         );
@@ -54,4 +68,37 @@ export const createInterview = authed
             id: interview.id,
             message: `Interview created successfully with ${quiz.questions.length} questions`,
         };
+    });
+
+export const getInterviews = authed
+    .route({
+        method: "GET",
+        path: "/interviews",
+        description: "Get all interviews",
+        tags: ["interview"],
+    })
+    .output(z.array(interviewSchema))
+    .handler(async ({ context }) => {
+        const userId = context.user.id;
+        const interviews = await db.query.interviews.findMany({
+            where: (interviews, { eq }) => eq(interviews.userId, userId),
+        });
+        return interviews;
+    });
+
+export const getInterview = authed
+    .route({
+        method: "GET",
+        path: "/interview/:id",
+        description: "Get an interview with questions",
+        tags: ["interview"],
+    })
+    .input(z.object({
+        id: z.string(),
+    }))
+    .output(interviewWithQuestionsSchema.nullable())
+    .handler(async ({ input }) => {
+        const { id } = input;
+        const interview = await getInterviewWithQuestions(id);
+        return interview ?? null;
     });

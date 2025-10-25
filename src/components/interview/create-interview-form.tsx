@@ -25,11 +25,13 @@ import { useMutation } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { Spinner } from "../ui/spinner";
-import { useRouter } from "next/navigation";
 import { PlusIcon } from "lucide-react";
+import { getQueryClient } from "@/lib/query/hydration";
+import { useState } from "react";
 
 export const CreateInterviewForm = () => {
-  const router = useRouter();
+  const queryClient = getQueryClient();
+  const [open, setOpen] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -63,7 +65,13 @@ export const CreateInterviewForm = () => {
     orpc.interview.create.mutationOptions({
       onSuccess: () => {
         toast.success("Interview created successfully");
-        router.refresh();
+        queryClient.invalidateQueries({
+          queryKey: orpc.interview.get.queryKey(),
+        });
+        queryClient.refetchQueries({
+          queryKey: orpc.interview.get.queryKey(),
+        });
+        setOpen(false);
       },
       onError: (error: Error) => {
         toast.error("Error creating interview: " + error.message);
@@ -72,7 +80,7 @@ export const CreateInterviewForm = () => {
   );
 
   return (
-    <ResponsiveDialog>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
       <ResponsiveDialogTrigger asChild>
         <Button variant="outline">
           Create <PlusIcon />

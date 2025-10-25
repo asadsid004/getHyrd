@@ -11,6 +11,7 @@ export async function saveInterviewWithQuestions(
         difficulty: "easy" | "medium" | "hard";
         numQuestions: number;
         timeLimit: number;
+        genDesc: string
     },
     quiz: QuizType
 ) {
@@ -24,6 +25,9 @@ export async function saveInterviewWithQuestions(
             difficulty: interviewData.difficulty,
             numQuestions: interviewData.numQuestions,
             timeLimit: interviewData.timeLimit,
+            genDesc: interviewData.genDesc,
+            score: 0,
+            correctAnswers: 0,
         })
         .returning();
 
@@ -53,6 +57,7 @@ export async function getInterviewWithQuestions(interviewId: string) {
             questions: {
                 orderBy: (questions, { asc }) => [asc(questions.order)],
             },
+            attempt: true,
         },
     });
 }

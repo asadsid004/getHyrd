@@ -3,6 +3,9 @@ import { google } from "@ai-sdk/google";
 import { z } from "zod";
 
 export const quizSchema = z.object({
+    generalDescription: z
+        .string()
+        .describe("The general description of the interview"),
     questions: z.array(
         z.object({
             question: z
@@ -74,7 +77,9 @@ Number of Questions: ${numQuestions}
 - Use clear, professional language
 
 **OUTPUT:**
-Generate ${numQuestions} high-quality interview questions that would effectively assess a candidate's readiness for interviews on ${topic}.`,
+questions: Generate ${numQuestions} high-quality interview questions that would effectively assess a candidate's readiness for interviews on ${topic}.
+generalDescription: Generate a general description of the interview.
+`,
     });
 
     return result.object;
