@@ -14,6 +14,10 @@ export default async function InterviewAttemptPage({ params }: PageProps) {
     orpc.interview.getOne.queryOptions({ input: { id } })
   );
 
+  await queryClient.prefetchQuery(
+    orpc.interview.getReport.queryOptions({ input: { interviewId: id } })
+  );
+
   return (
     <HydrateClient client={queryClient}>
       <InterviewAttempt id={id} />

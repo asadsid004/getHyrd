@@ -6,6 +6,8 @@ import { generateInterviewQuiz } from "@/service/interview/create";
 import { saveInterviewWithQuestions, getInterviewWithQuestions } from "./helpers";
 import { authed } from "@/middlewares/auth";
 import { interviewSchema, interviewWithQuestionsSchema } from "./schema";
+import { generateInterviewReport } from "@/service/interview/report";
+import { interviewReports, learningResources } from "@/db/schema/report-schema";
 
 
 export const createInterview = authed
@@ -106,16 +108,164 @@ export const getInterview = authed
         return interview ?? null;
     });
 
+// export const submitAttempt = authed
+//     .route({
+//         method: "POST",
+//         path: "/interview/submit",
+//         description: "Submit interview answers",
+//         tags: ["interview"],
+//     })
+//     .input(z.object({
+//         interviewId: z.string(),
+//         answers: z.record(z.string(), z.string()), // questionId -> selected option letter (A/B/C/D)
+//     }))
+//     .output(z.object({
+//         score: z.number(),
+//         total: z.number(),
+//         correctAnswers: z.number(),
+//         incorrectAnswers: z.number(),
+//         unanswered: z.number(),
+//     }))
+//     .handler(async ({ input, context }) => {
+//         const userId = context.user.id;
+//         const { interviewId, answers } = input;
+
+//         // Get interview with questions
+//         const interview = await getInterviewWithQuestions(interviewId);
+
+//         if (!interview) {
+//             throw new Error("Interview not found");
+//         }
+
+//         if (interview.userId !== userId) {
+//             throw new Error("Unauthorized: This interview belongs to another user");
+//         }
+
+//         if (interview.attempt) {
+//             throw new Error("Interview already attempted");
+//         }
+
+//         let correctCount = 0;
+//         let incorrectCount = 0;
+//         let unansweredCount = 0;
+//         const responses = [];
+
+//         console.log("Answers received:", answers);
+
+//         for (const question of interview.questions) {
+//             const selectedOptionLetter = answers[question.id]; // "A", "B", "C", "D", or undefined
+
+//             // Handle unanswered questions
+//             if (!selectedOptionLetter || selectedOptionLetter.trim() === "") {
+//                 console.log(`Question ${question.id}: UNANSWERED`);
+//                 unansweredCount++;
+//                 responses.push({
+//                     attemptId: "", // Will be filled after creating attempt
+//                     questionId: question.id,
+//                     selectedOption: "", // Empty string for unanswered
+//                     isCorrect: 0,
+//                 });
+//                 continue;
+//             }
+
+//             // Get the full text of the selected answer based on the letter
+//             const selectedAnswerText = question[`option${selectedOptionLetter}` as keyof typeof question] as string;
+
+//             // Handle case where selected option letter doesn't exist (invalid input)
+//             if (!selectedAnswerText) {
+//                 console.warn(`Invalid option letter "${selectedOptionLetter}" for question ${question.id}`);
+//                 incorrectCount++;
+//                 responses.push({
+//                     attemptId: "",
+//                     questionId: question.id,
+//                     selectedOption: selectedOptionLetter,
+//                     isCorrect: 0,
+//                 });
+//                 continue;
+//             }
+
+//             // Compare the selected answer text with the correct answer text stored in DB
+//             const isCorrect = selectedAnswerText === question.correctOption;
+
+//             if (isCorrect) {
+//                 correctCount++;
+//             } else {
+//                 incorrectCount++;
+//             }
+
+//             console.log(`Question ${question.order}:`, {
+//                 questionId: question.id,
+//                 selectedOptionLetter,
+//                 selectedAnswerText,
+//                 correctOptionText: question.correctOption,
+//                 isCorrect,
+//             });
+
+//             responses.push({
+//                 attemptId: "",
+//                 questionId: question.id,
+//                 selectedOption: selectedOptionLetter, // Store the letter (A/B/C/D)
+//                 isCorrect: isCorrect ? 1 : 0,
+//             });
+//         }
+
+//         console.log("=== Summary ===");
+//         console.log("Correct:", correctCount);
+//         console.log("Incorrect:", incorrectCount);
+//         console.log("Unanswered:", unansweredCount);
+//         console.log("Total:", interview.questions.length);
+
+//         // Create attempt record
+//         const [attempt] = await db
+//             .insert(interviewAttempts)
+//             .values({
+//                 interviewId,
+//                 userId,
+//                 score: correctCount,
+//                 totalQuestions: interview.questions.length,
+//                 completedAt: new Date(),
+//             })
+//             .returning();
+
+//         // Insert all question responses with the attempt ID
+//         const responsesToInsert = responses.map(resp => ({
+//             ...resp,
+//             attemptId: attempt.id,
+//         }));
+
+//         if (responsesToInsert.length > 0) {
+//             await db.insert(questionResponses).values(responsesToInsert);
+//         }
+
+//         // Update interview as attempted
+//         await db
+//             .update(interviews)
+//             .set({
+//                 isAttempted: true,
+//                 score: correctCount,
+//                 correctAnswers: correctCount,
+//             })
+//             .where(eq(interviews.id, interviewId));
+
+//         return {
+//             score: correctCount,
+//             total: interview.questions.length,
+//             correctAnswers: correctCount,
+//             incorrectAnswers: incorrectCount,
+//             unanswered: unansweredCount,
+//         };
+//     });
+
 export const submitAttempt = authed
     .route({
         method: "POST",
         path: "/interview/submit",
-        description: "Submit interview answers",
+        description: "Submit interview answers and generate report",
         tags: ["interview"],
     })
     .input(z.object({
         interviewId: z.string(),
-        answers: z.record(z.string(), z.string()), // questionId -> selected option letter (A/B/C/D)
+        answers: z.record(z.string(), z.string()),
     }))
     .output(z.object({
         score: z.number(),
@@ -123,6 +273,7 @@ export const submitAttempt = authed
         correctAnswers: z.number(),
         incorrectAnswers: z.number(),
         unanswered: z.number(),
+        reportId: z.string(),
     }))
     .handler(async ({ input, context }) => {
         const userId = context.user.id;
@@ -147,33 +298,39 @@ export const submitAttempt = authed
         let incorrectCount = 0;
         let unansweredCount = 0;
         const responses = [];
+        const incorrectQuestions = [];
 
         console.log("=== Processing Answers ===");
-        console.log("Answers received:", answers);
 
+        // Process all answers
         for (const question of interview.questions) {
-            const selectedOptionLetter = answers[question.id]; // "A", "B", "C", "D", or undefined
+            const selectedOptionLetter = answers[question.id];
 
-            // Handle unanswered questions
             if (!selectedOptionLetter || selectedOptionLetter.trim() === "") {
-                console.log(`Question ${question.id}: UNANSWERED`);
                 unansweredCount++;
+                incorrectQuestions.push({
+                    question: question.question,
+                    correctAnswer: question.correctOption,
+                    explanation: question.explanation,
+                });
                 responses.push({
-                    attemptId: "", // Will be filled after creating attempt
+                    attemptId: "",
                     questionId: question.id,
-                    selectedOption: "", // Empty string for unanswered
+                    selectedOption: "",
                     isCorrect: 0,
                 });
                 continue;
             }
 
-            // Get the full text of the selected answer based on the letter
             const selectedAnswerText = question[`option${selectedOptionLetter}` as keyof typeof question] as string;
 
-            // Handle case where selected option letter doesn't exist (invalid input)
             if (!selectedAnswerText) {
-                console.warn(`Invalid option letter "${selectedOptionLetter}" for question ${question.id}`);
                 incorrectCount++;
+                incorrectQuestions.push({
+                    question: question.question,
+                    correctAnswer: question.correctOption,
+                    explanation: question.explanation,
+                });
                 responses.push({
                     attemptId: "",
                     questionId: question.id,
@@ -183,36 +340,31 @@ export const submitAttempt = authed
                 continue;
             }
 
-            // Compare the selected answer text with the correct answer text stored in DB
             const isCorrect = selectedAnswerText === question.correctOption;
 
             if (isCorrect) {
                 correctCount++;
             } else {
                 incorrectCount++;
+                incorrectQuestions.push({
+                    question: question.question,
+                    correctAnswer: question.correctOption,
+                    explanation: question.explanation,
+                });
             }
-
-            console.log(`Question ${question.order}:`, {
-                questionId: question.id,
-                selectedOptionLetter,
-                selectedAnswerText,
-                correctOptionText: question.correctOption,
-                isCorrect,
-            });
 
             responses.push({
                 attemptId: "",
                 questionId: question.id,
-                selectedOption: selectedOptionLetter, // Store the letter (A/B/C/D)
+                selectedOption: selectedOptionLetter,
                 isCorrect: isCorrect ? 1 : 0,
             });
         }
 
-        console.log("=== Summary ===");
+        console.log("=== Score Summary ===");
         console.log("Correct:", correctCount);
         console.log("Incorrect:", incorrectCount);
         console.log("Unanswered:", unansweredCount);
-        console.log("Total:", interview.questions.length);
 
         // Create attempt record
         const [attempt] = await db
@@ -226,7 +378,7 @@ export const submitAttempt = authed
             })
             .returning();
 
-        // Insert all question responses with the attempt ID
+        // Insert question responses
         const responsesToInsert = responses.map(resp => ({
             ...resp,
             attemptId: attempt.id,
@@ -236,7 +388,52 @@ export const submitAttempt = authed
             await db.insert(questionResponses).values(responsesToInsert);
         }
 
-        // Update interview as attempted
+        console.log("=== Generating Report ===");
+
+        // Generate personalized report
+        const reportData = await generateInterviewReport({
+            topic: interview.topic,
+            difficulty: interview.difficulty,
+            totalQuestions: interview.questions.length,
+            correctAnswers: correctCount,
+            incorrectQuestions,
+        });
+
+        // Save report to database
+        const [report] = await db
+            .insert(interviewReports)
+            .values({
+                interviewId,
+                userId,
+                overallAnalysis: reportData.overallAnalysis,
+                strengthsAnalysis: reportData.strengthsAnalysis,
+                weaknessesAnalysis: reportData.weaknessesAnalysis,
+                improvementSuggestions: reportData.improvementSuggestions,
+            })
+            .returning();
+
+        // Save learning resources
+        const resources = reportData.learningResources.map(resource => ({
+            reportId: report.id,
+            title: resource.title,
+            description: resource.description,
+            resourceType: resource.resourceType,
+            url: resource.url,
+            topicCovered: resource.topicCovered,
+            difficultyLevel: resource.difficultyLevel,
+            estimatedTime: resource.estimatedTime || null,
+            priority: resource.priority,
+        }));
+
+        if (resources.length > 0) {
+            await db.insert(learningResources).values(resources);
+        }
+
+        console.log("=== Report Generated ===");
+        console.log("Report ID:", report.id);
+        console.log("Resources:", resources.length);
+
+        // Update interview status (only after report is successfully generated)
         await db
             .update(interviews)
             .set({
@@ -252,5 +449,40 @@ export const submitAttempt = authed
             correctAnswers: correctCount,
             incorrectAnswers: incorrectCount,
             unanswered: unansweredCount,
+            reportId: report.id,
         };
+    });
+
+export const getReport = authed
+    .route({
+        method: "GET",
+        path: "/interview/report/:interviewId",
+        description: "Get interview report with resources",
+        tags: ["interview"],
+    })
+    .input(z.object({
+        interviewId: z.string(),
+    }))
+    .handler(async ({ input, context }) => {
+        const userId = context.user.id;
+
+        const report = await db.query.interviewReports.findFirst({
+            where: eq(interviewReports.interviewId, input.interviewId),
+            with: {
+                interview: true,
+                resources: {
+                    orderBy: (resources, { desc }) => [desc(resources.priority)],
+                },
+            },
+        });
+
+        if (!report) {
+            throw new Error("Report not found");
+        }
+
+        if (report.userId !== userId) {
+            throw new Error("Unauthorized");
+        }
+
+        return report;
     });

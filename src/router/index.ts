@@ -4,6 +4,7 @@ import { getJobs } from "./jobs/router";
 import { getResumes, updateResumeData, getResume, analyseResumeFromFile, optimizeResumeFromFile, getResumeAnalyses, analyseResumeFromText, optimizeResumeFromText, optimizeResumeAnalysisBased, createResume, deleteResume } from "./resumes/router";
 import { getCoverLetters, getCoverLetter, createCoverLetter, updateCoverLetter, deleteCoverLetter, analyseCoverLetterFromFile, analyseCoverLetterFromText, getCoverLetterAnalyses, optimizeCoverLetterFromText, optimizeCoverLetterFromFileData, optimizeCoverLetterBasedonAnalysis } from "./cover-letters/router";
 import { createInterview, getInterview, getInterviews, submitAttempt } from "./interview/router";
+import { getReport } from "./interview/router";
 
 /**
  * Contains all orpc routes
@@ -50,5 +51,6 @@ export const router = {
         get: getInterviews,
         getOne: getInterview,
         submitAttempt: submitAttempt,
+        getReport: getReport
     }
 }

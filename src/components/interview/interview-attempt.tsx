@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Spinner } from "../ui/spinner";
+import { InterviewReport } from "./interview-report";
 
 interface InterviewAttemptProps {
   id: string;
@@ -248,43 +249,8 @@ export const InterviewAttempt = ({ id }: InterviewAttemptProps) => {
   if (interview.attempt) {
     // Show results
     return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{interview.topic}</h2>
-                <p className="text-muted-foreground">{interview.genDesc}</p>
-              </div>
-
-              <div className="py-8">
-                <div className="text-6xl font-bold text-primary mb-2">
-                  {interview.attempt.score}/{interview.attempt.totalQuestions}
-                </div>
-                <p className="text-xl text-muted-foreground">
-                  {Math.round(
-                    (interview.attempt.score! /
-                      interview.attempt.totalQuestions) *
-                      100
-                  )}
-                  % Correct
-                </p>
-              </div>
-
-              <div className="flex justify-center gap-4">
-                <Button onClick={() => router.push("/interview")}>
-                  Back to Interviews
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/interview/${id}/review`)}
-                >
-                  Review Answers
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className=" mx-auto p-6 space-y-6">
+        <InterviewReport id={id} />
       </div>
     );
   }
