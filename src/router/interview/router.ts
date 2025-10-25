@@ -1,9 +1,11 @@
-import { authed } from "@/middlewares/auth";
+import { db } from "@/db/drizzle";
+import { interviewAttempts, questionResponses, interviews } from "@/db/schema/interview-schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { generateInterviewQuiz } from "@/service/interview/create";
 import { saveInterviewWithQuestions, getInterviewWithQuestions } from "./helpers";
+import { authed } from "@/middlewares/auth";
 import { interviewSchema, interviewWithQuestionsSchema } from "./schema";
-import { db } from "@/db/drizzle";
 
 
 export const createInterview = authed
@@ -100,5 +102,155 @@ export const getInterview = authed
     .handler(async ({ input }) => {
         const { id } = input;
         const interview = await getInterviewWithQuestions(id);
+
         return interview ?? null;
+    });
+
+export const submitAttempt = authed
+    .route({
+        method: "POST",
+        path: "/interview/submit",
+        description: "Submit interview answers",
+        tags: ["interview"],
+    })
+    .input(z.object({
+        interviewId: z.string(),
+        answers: z.record(z.string(), z.string()), // questionId -> selected option letter (A/B/C/D)
+    }))
+    .output(z.object({
+        score: z.number(),
+        total: z.number(),
+        correctAnswers: z.number(),
+        incorrectAnswers: z.number(),
+        unanswered: z.number(),
+    }))
+    .handler(async ({ input, context }) => {
+        const userId = context.user.id;
+        const { interviewId, answers } = input;
+
+        // Get interview with questions
+        const interview = await getInterviewWithQuestions(interviewId);
+
+        if (!interview) {
+            throw new Error("Interview not found");
+        }
+
+        if (interview.userId !== userId) {
+            throw new Error("Unauthorized: This interview belongs to another user");
+        }
+
+        if (interview.attempt) {
+            throw new Error("Interview already attempted");
+        }
+
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let unansweredCount = 0;
+        const responses = [];
+
+        console.log("=== Processing Answers ===");
+        console.log("Answers received:", answers);
+
+        for (const question of interview.questions) {
+            const selectedOptionLetter = answers[question.id]; // "A", "B", "C", "D", or undefined
+
+            // Handle unanswered questions
+            if (!selectedOptionLetter || selectedOptionLetter.trim() === "") {
+                console.log(`Question ${question.id}: UNANSWERED`);
+                unansweredCount++;
+                responses.push({
+                    attemptId: "", // Will be filled after creating attempt
+                    questionId: question.id,
+                    selectedOption: "", // Empty string for unanswered
+                    isCorrect: 0,
+                });
+                continue;
+            }
+
+            // Get the full text of the selected answer based on the letter
+            const selectedAnswerText = question[`option${selectedOptionLetter}` as keyof typeof question] as string;
+
+            // Handle case where selected option letter doesn't exist (invalid input)
+            if (!selectedAnswerText) {
+                console.warn(`Invalid option letter "${selectedOptionLetter}" for question ${question.id}`);
+                incorrectCount++;
+                responses.push({
+                    attemptId: "",
+                    questionId: question.id,
+                    selectedOption: selectedOptionLetter,
+                    isCorrect: 0,
+                });
+                continue;
+            }
+
+            // Compare the selected answer text with the correct answer text stored in DB
+            const isCorrect = selectedAnswerText === question.correctOption;
+
+            if (isCorrect) {
+                correctCount++;
+            } else {
+                incorrectCount++;
+            }
+
+            console.log(`Question ${question.order}:`, {
+                questionId: question.id,
+                selectedOptionLetter,
+                selectedAnswerText,
+                correctOptionText: question.correctOption,
+                isCorrect,
+            });
+
+            responses.push({
+                attemptId: "",
+                questionId: question.id,
+                selectedOption: selectedOptionLetter, // Store the letter (A/B/C/D)
+                isCorrect: isCorrect ? 1 : 0,
+            });
+        }
+
+        console.log("=== Summary ===");
+        console.log("Correct:", correctCount);
+        console.log("Incorrect:", incorrectCount);
+        console.log("Unanswered:", unansweredCount);
+        console.log("Total:", interview.questions.length);
+
+        // Create attempt record
+        const [attempt] = await db
+            .insert(interviewAttempts)
+            .values({
+                interviewId,
+                userId,
+                score: correctCount,
+                totalQuestions: interview.questions.length,
+                completedAt: new Date(),
+            })
+            .returning();
+
+        // Insert all question responses with the attempt ID
+        const responsesToInsert = responses.map(resp => ({
+            ...resp,
+            attemptId: attempt.id,
+        }));
+
+        if (responsesToInsert.length > 0) {
+            await db.insert(questionResponses).values(responsesToInsert);
+        }
+
+        // Update interview as attempted
+        await db
+            .update(interviews)
+            .set({
+                isAttempted: true,
+                score: correctCount,
+                correctAnswers: correctCount,
+            })
+            .where(eq(interviews.id, interviewId));
+
+        return {
+            score: correctCount,
+            total: interview.questions.length,
+            correctAnswers: correctCount,
+            incorrectAnswers: incorrectCount,
+            unanswered: unansweredCount,
+        };
     });
