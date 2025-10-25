@@ -457,7 +457,7 @@ export const getReport = authed
     .route({
         method: "GET",
         path: "/interview/report/:interviewId",
-        description: "Get interview report with resources",
+        description: "Get interview report with resources and responses",
         tags: ["interview"],
     })
     .input(z.object({
@@ -476,13 +476,31 @@ export const getReport = authed
             },
         });
 
-        if (!report) {
-            throw new Error("Report not found");
+        const attempt = await db.query.interviewAttempts.findFirst({
+            where: eq(interviewAttempts.interviewId, input.interviewId),
+            with: {
+                interview: true,
+                responses: {
+                    with: {
+                        question: true,
+                    },
+                },
+            },
+        });
+
+        if (!report || !attempt) {
+            throw new Error("Report or attempt not found");
         }
 
         if (report.userId !== userId) {
             throw new Error("Unauthorized");
         }
 
-        return report;
+        // Sort responses by question order
+        const sortedResponses = attempt.responses.sort((a, b) => a.question.order - b.question.order);
+
+        return {
+            report,
+            responses: sortedResponses,
+        };
     });
