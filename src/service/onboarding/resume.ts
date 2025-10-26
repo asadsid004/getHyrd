@@ -1,6 +1,7 @@
 import { google } from "../models/ai";
 import { generateObject } from 'ai';
 import { ResumeSchema, type Resume } from "../../router/onboarding/schema";
+import { z } from "zod";
 
 type ExperienceItem = {
   company?: string | null;
@@ -13,7 +14,7 @@ type ExperienceItem = {
 
 type Experience = ExperienceItem[];
 
-export function calculateExperienceYears(experience: Experience | undefined): number | null {
+export function calculateExperienceYears(experience: Experience | null | undefined): number | null {
   if (!experience || experience.length === 0) return null;
 
   const parseDate = (str?: string | null) => {
@@ -38,33 +39,10 @@ export function calculateExperienceYears(experience: Experience | undefined): nu
   return years > 0 ? years : null;
 }
 
-export function cleanResumeOutput(data: unknown): Resume {
-  const cleanText = (value: unknown): unknown => {
-    if (typeof value === "string") {
-      return value.replace(/\s*\n\s*/g, " ").replace(/\s{2,}/g, " ").trim();
-    }
-    return value;
-  };
-
-  const recursiveClean = (obj: unknown): unknown => {
-    if (Array.isArray(obj)) return obj.map(recursiveClean);
-    if (typeof obj === "object" && obj !== null) {
-      const cleaned: Record<string, unknown> = {};
-      for (const [key, val] of Object.entries(obj)) {
-        cleaned[key] = recursiveClean(val);
-      }
-      return cleaned;
-    }
-    return cleanText(obj);
-  };
-
-  return recursiveClean(data) as Resume;
-}
-
-export async function extractResumeWithGemini(resumeFileName: string, resumeFileData: ArrayBuffer, resumeFileMimeType: string): Promise<Resume> {
+export async function extractResumeWithGemini(text: string): Promise<Resume> {
 
   const prompt = `
-You are a professional resume parser AI. Your job is to extract and normalize every possible piece of relevant structured data from the resume file.
+You are a professional resume parser AI. Your job is to extract and normalize every possible piece of relevant structured data from the resume text.
 
 Formatting Rules:
 - Remove unnecessary newlines (\\n), tabs, or extra spaces. Combine broken lines into full sentences.
@@ -116,29 +94,56 @@ The extracted JSON must strictly follow this structure:
   "achievements": ["string"],
   "languages": ["string"]
 }
-`;
 
-  console.log('Resume file received', { file: resumeFileName })
+Resume text:
+${text}
+`;
 
   const response = await generateObject({
     model: google('gemini-2.5-flash'),
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "file",
-            data: resumeFileData,
-            mediaType: resumeFileMimeType,
-          },
-        ],
-      },
-    ],
-    system: prompt,
     schema: ResumeSchema,
+    prompt: prompt,
   });
 
   return response.object;
 }
 
+export async function extractResumeTextWithGemini(fileName: string, data: string, mimeType: string) {
+
+  try {
+
+    if (!mimeType.includes('pdf')) {
+      throw new Error('Only PDF files are supported');
+    }
+
+    const fileBuffer = Buffer.from(data, 'base64')
+
+    if (fileBuffer.length === 0) {
+      throw new Error('Empty file received');
+    }
+
+    const uint8Array = new Uint8Array(fileBuffer)
+
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse(uint8Array)
+    const pdfData = await parser.getText();
+    const text = pdfData.text.trim();
+
+    if (!text) {
+      throw new Error('Unable to extract text from PDF');
+    }
+
+    const result: z.infer<typeof ResumeSchema> = await extractResumeWithGemini(text);
+
+    const yearsOfExperience = calculateExperienceYears(result.experience);
+    result.yearsOfExperience = yearsOfExperience;
+
+    return { message: 'Resume extracted successfully', result: result };
+
+  } catch (error) {
+    console.error('Error extracting text from PDF', error)
+    throw new Error('Failed to extract text from PDF');
+  }
+
+}
 

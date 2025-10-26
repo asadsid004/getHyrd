@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ResumeSchema } from "../onboarding/schema";
 import { aiAnalyzeSchema, analyseResumeFileData, analyseResumeTextData } from "@/service/resume/analyse";
 import { optimizeResumeTextData, optimizeResumeAnalysisBasedData } from "@/service/resume/optimize";
+import { extractResumeTextWithGemini } from "@/service/onboarding/resume";
 
 export const getResumes = authed
     .route({
@@ -209,18 +210,9 @@ export const analyseResumeFromFile = authed
             data: resumeDataBase64
         }
 
-        const extractResume = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiInput),
-        });
+        const { result } = await extractResumeTextWithGemini(apiInput.fileName, apiInput.data, apiInput.mimeType);
 
-        const { message, result } = await extractResume.json();
-        if (!extractResume.ok || !result) {
-            throw new Error(message || "Failed to extract resume details");
-        }
-
-        console.log("Extracted resume", extractResume);
+        console.log("Extracted resume", result);
 
         // Analyse the resume data
         const analysedData = await analyseResumeFileData(role, description, resumeDataBase64);
@@ -427,18 +419,13 @@ export const optimizeResumeFromFile = authed
         }
 
 
-        const extractResume = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiInput),
-        });
+        const { result } = await extractResumeTextWithGemini(apiInput.fileName, apiInput.data, apiInput.mimeType);
 
-        const { message, result } = await extractResume.json();
-        if (!extractResume.ok || !result) {
-            throw new Error(message || "Failed to extract resume details");
+        if (!result) {
+            throw new Error("Failed to extract resume details");
         }
 
-        console.log("Extracted resume", extractResume);
+        console.log("Extracted resume", result);
 
         // Analyse the resume data
         const optimizedResume = await optimizeResumeTextData(role, description, result);

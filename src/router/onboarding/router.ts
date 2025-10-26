@@ -3,6 +3,7 @@ import { PreferencesSchema, ResumeUploadSchema, ResumeExtractResponseSchema } fr
 import { db } from "@/db/drizzle";
 import { jobPreferences, user, resumes, resumeData, userProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { extractResumeTextWithGemini } from "@/service/onboarding/resume";
 
 export const savePreferences = authed
     .route({
@@ -87,16 +88,18 @@ export const extractResume = authed
 
         console.log('Resume file received', { file: input.fileName })
 
-        const res = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(input),
-        });
+        const { result } = await extractResumeTextWithGemini(input.fileName, input.data, input.mimeType);
 
-        const { message, result } = await res.json();
-        if (!res.ok || !result) {
-            throw new Error(message || "Failed to extract resume details");
-        }
+        // const res = await fetch(`${process.env.AI_SERVICE_URL}/resume`, {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(input),
+        // });
+
+        // const { message, result } = await res.json();
+        // // if (!res.ok || !result) {
+        // //     throw new Error(message || "Failed to extract resume details");
+        // // }
 
         // Step 1: Transaction to ensure atomic updates
         try {
