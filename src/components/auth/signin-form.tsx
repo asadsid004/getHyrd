@@ -48,7 +48,7 @@ export function SignInDialog() {
   return (
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
-        <Button>Sign In</Button>
+        <Button>Start Search</Button>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <div className="space-y-4 overflow-y-auto p-6">
