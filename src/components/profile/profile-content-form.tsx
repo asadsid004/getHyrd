@@ -246,7 +246,7 @@ export function ProfileContentForm() {
         <div className="lg:col-span-2 space-y-8">
           {/* Personal Information */}
           <div className="flex justify-between gap-x-4">
-            <div className="p-2 rounded-md border bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100 dark:from-blue-950 dark:to-indigo-950 dark:border-blue-900">
+            <div className="p-2 rounded-md border bg-gradient-to-b from-blue-100 to-blue-50 border-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-900">
               <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
                 <strong>
                   <FlameKindling />

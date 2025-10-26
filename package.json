@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "drizzle-kit db:push",
+    "db:generate": "drizzle-kit db:generate",
+    "db:migrate": "drizzle-kit db:migrate",
+    "db:studio": "drizzle-kit db:studio"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.23",

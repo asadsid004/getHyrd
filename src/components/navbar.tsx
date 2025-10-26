@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Logout } from "@/components/auth/logout-button";
+import Image from "next/image";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -17,14 +20,32 @@ const navItems = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoSrc = theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg";
 
   return (
     <header className="border-b bg-background">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4">
         {/* Brand or Logo */}
         <div className="flex items-center space-x-4">
-          <Link href="/" className="text-lg font-bold">
-            JobApp
+          <Link href="/dashboard" className="text-lg font-bold">
+            {mounted ? (
+              <Image
+                src={logoSrc}
+                alt="Logo"
+                width={100}
+                height={100}
+                className="h-8 w-auto"
+              />
+            ) : (
+              "Hyrd"
+            )}
           </Link>
         </div>
 

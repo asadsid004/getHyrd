@@ -16,6 +16,7 @@ import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InterviewDelete } from "./interview-delete";
 
 export const InterviewReport = ({ id }: { id: string }) => {
   const router = useRouter();
@@ -95,11 +96,12 @@ export const InterviewReport = ({ id }: { id: string }) => {
   return (
     <div className="min-h-screen">
       {/* Action Buttons */}
-      <div className="pb-6 pt-1">
+      <div className="flex justify-between pb-6 pt-1">
         <Button variant="outline" onClick={() => router.push("/interview")}>
           <ArrowLeft />
           Back to Interviews
         </Button>
+        <InterviewDelete title={true} id={id} />
       </div>
 
       <Tabs defaultValue="report" className="w-full">
