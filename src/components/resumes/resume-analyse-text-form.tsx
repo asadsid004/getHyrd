@@ -31,27 +31,29 @@ export const ResumeAnalyseTextForm = ({ id }: { id: string }) => {
 
   const form = useForm({
     defaultValues: {
-      resumeId: "",
       role: "",
       description: "",
     },
     validators: {
       onChange: z.object({
-        resumeId: z.string().min(1, "ID is required"),
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
       }),
       onSubmit: async ({ value }) => {
-        const resumeId = id;
+        const resumeId = id as string;
 
         console.log("Resume ID: " + resumeId);
 
-        if (!value.resumeId) {
-          toast.error("Please upload a resume");
+        if (!value.role || !value.description) {
+          toast.error("Please fill in all fields");
           return;
         }
 
-        analyseMutation.mutate(value);
+        analyseMutation.mutate({
+          resumeId,
+          role: value.role,
+          description: value.description,
+        });
       },
     },
   });

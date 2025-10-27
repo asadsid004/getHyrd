@@ -293,11 +293,15 @@ export const deleteCoverLetter = authed
             throw new Error("Cover letter not found or unauthorized");
         }
 
-        await db
-            .delete(coverLetters)
-            .where(eq(coverLetters.id, id));
+        await db.transaction(async (tx) => {
+            await tx
+                .delete(coverLetterAnalyses)
+                .where(eq(coverLetterAnalyses.coverLetterId, id));
 
-        return { success: true };
+            await tx
+                .delete(coverLetters)
+                .where(eq(coverLetters.id, id));
+        });
     });
 
 export const analyseCoverLetterFromFile = authed

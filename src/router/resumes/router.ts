@@ -385,7 +385,8 @@ export const getResumeAnalyses = authed
             .select()
             .from(resumeAnalyses)
             .where(eq(resumeAnalyses.resumeId, id))
-            .orderBy(resumeAnalyses.createdAt);
+            .orderBy(resumeAnalyses.createdAt)
+            .limit(1)
 
         return analyses;
     });
