@@ -199,11 +199,7 @@ export const InterviewList = () => {
 
         <div className="flex-1" />
         {interview.isAttempted ? (
-          <Button
-            variant="outline"
-            className="w-full group-hover:border-primary group-hover:text-primary"
-            asChild
-          >
+          <Button variant="outline" className="w-full" asChild>
             <Link href={`/interview/${interview.id}`}>
               <EyeIcon className="w-4 h-4 mr-2" />
               View Results
