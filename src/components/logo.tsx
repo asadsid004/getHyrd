@@ -13,7 +13,8 @@ export const Logo = () => {
     setMounted(true);
   }, []);
 
-  const logoSrc = theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg";
+  const logoSrc =
+    theme === "dark" ? "/logo-dark-new.svg" : "/logo-light-new.svg";
 
   return (
     <Link href="/dashboard" className="text-lg font-bold">

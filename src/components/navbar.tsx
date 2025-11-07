@@ -27,7 +27,8 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
-  const logoSrc = theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg";
+  const logoSrc =
+    theme === "dark" ? "/logo-dark-new.svg" : "/logo-light-new.svg";
 
   return (
     <header className="border-b bg-background">
@@ -44,7 +45,7 @@ export function Navbar() {
                 className="h-8 w-auto"
               />
             ) : (
-              "Hyrd"
+              "Hired"
             )}
           </Link>
         </div>

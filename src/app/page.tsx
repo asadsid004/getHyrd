@@ -22,8 +22,8 @@ export default function Home() {
       <main className="relative max-w-6xl mx-auto flex flex-col items-center text-center py-24 px-6">
         <h1 className="text-5xl sm:text-7xl tracking-tight leading-tight">
           Get{" "}
-          <span className="text-gray-500 dark:text-gray-400 font-semibold">
-            Hyrd
+          <span className="text-red-500 dark:text-red-500 font-semibold">
+            Hired
           </span>{" "}
           Faster <br /> — with AI
         </h1>
@@ -47,7 +47,7 @@ export default function Home() {
               WebkitTextFillColor: "transparent",
             }}
           >
-            HYRD
+            HIRED
           </h2>
         </div>
       </footer>

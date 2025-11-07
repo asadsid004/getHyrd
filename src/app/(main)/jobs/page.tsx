@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function JobsPage() {
   return (
-    <div className="space-y-8 mt-6">
+    <div className="space-y-8 my-6">
       <div className="flex justify-between items-center gap-2">
         <div className="flex flex-col items-start gap-2">
           <h1 className="text-4xl font-bold tracking-tight">Jobs</h1>
