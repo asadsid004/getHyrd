@@ -437,7 +437,10 @@ export function CoverLetterContentForm({
                   Cover Letter Preview
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-12" id="cover-letter-preview-content">
+              <CardContent
+                className="p-12 bg-white text-black"
+                id="cover-letter-preview-content"
+              >
                 <form.Subscribe selector={(state) => [state.values]}>
                   {([values]) => (
                     <div
