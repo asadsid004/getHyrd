@@ -47,17 +47,17 @@ export const CoverLetterCreateForm = () => {
         recipientName: z.string(),
         jobDescription: z.string(),
       }),
-      onSubmit: async ({ value }) => {
-        const input = {
-          title: value.title,
-          recipientCompany: value.recipientCompany,
-          recipientPosition: value.recipientPosition,
-          recipientName: value.recipientName,
-          jobDescription: value.jobDescription,
-        };
+    },
+    onSubmit: async ({ value }) => {
+      const input = {
+        title: value.title,
+        recipientCompany: value.recipientCompany,
+        recipientPosition: value.recipientPosition,
+        recipientName: value.recipientName,
+        jobDescription: value.jobDescription,
+      };
 
-        createMutation.mutate(input);
-      },
+      createMutation.mutate(input);
     },
   });
 

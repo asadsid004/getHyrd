@@ -43,14 +43,14 @@ export const CoverLetterTextAnalyseForm = ({
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
       }),
-      onSubmit: async ({ value }) => {
-        const input = {
-          ...value,
-          coverLetterId,
-        };
+    },
+    onSubmit: async ({ value }) => {
+      const input = {
+        ...value,
+        coverLetterId,
+      };
 
-        analyseMutation.mutate(input);
-      },
+      analyseMutation.mutate(input);
     },
   });
 

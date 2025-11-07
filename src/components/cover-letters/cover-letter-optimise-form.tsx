@@ -42,31 +42,31 @@ export const CoverLetterOptimizeForm = () => {
         description: z.string().min(1, "Description is required"),
         coverLetter: z.instanceof(File, { message: "Resume is required" }),
       }),
-      onSubmit: async ({ value }) => {
-        if (!value.coverLetter) {
-          toast.error("Please upload a cover letter");
-          return;
-        }
+    },
+    onSubmit: async ({ value }) => {
+      if (!value.coverLetter) {
+        toast.error("Please upload a cover letter");
+        return;
+      }
 
-        const file = value.coverLetter;
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            const commaIndex = result.indexOf(",");
-            resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
-          };
-          reader.onerror = (e) => reject(e);
-          reader.readAsDataURL(file);
-        });
-
-        const input = {
-          ...value,
-          coverLetterData: base64,
+      const file = value.coverLetter;
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const commaIndex = result.indexOf(",");
+          resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
         };
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+      });
 
-        optimizeMutation.mutate(input);
-      },
+      const input = {
+        ...value,
+        coverLetterData: base64,
+      };
+
+      optimizeMutation.mutate(input);
     },
   });
 

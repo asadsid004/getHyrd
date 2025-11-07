@@ -43,14 +43,14 @@ export const CoverLetterOptimizeTextForm = ({
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
       }),
-      onSubmit: async ({ value }) => {
-        const input = {
-          ...value,
-          coverLetterId,
-        };
+    },
+    onSubmit: async ({ value }) => {
+      const input = {
+        ...value,
+        coverLetterId,
+      };
 
-        optimizeMutation.mutate(input);
-      },
+      optimizeMutation.mutate(input);
     },
   });
 

@@ -697,7 +697,7 @@ export function CoverLetterContentForm({
                                     className="text-sm flex items-start gap-2"
                                   >
                                     <span
-                                      className={`mt-1 inline-block flex-shrink-0 rounded-full w-2.5 h-2.5 ${
+                                      className={`mt-1 inline-block shrink-0 rounded-full w-2.5 h-2.5 ${
                                         item.type === "strength"
                                           ? "bg-green-500"
                                           : item.type === "minor-improvement"
