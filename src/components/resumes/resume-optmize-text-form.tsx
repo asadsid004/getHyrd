@@ -39,14 +39,14 @@ export const ResumeOptimizeTextForm = ({ resumeId }: { resumeId: string }) => {
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
       }),
-      onSubmit: async ({ value }) => {
-        const input = {
-          ...value,
-          resumeId,
-        };
+    },
+    onSubmit: async ({ value }) => {
+      const input = {
+        ...value,
+        resumeId,
+      };
 
-        optimizeMutation.mutate(input);
-      },
+      optimizeMutation.mutate(input);
     },
   });
 

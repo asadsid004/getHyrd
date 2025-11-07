@@ -1097,16 +1097,264 @@ export function ResumeContentForm({
                 )}
               </Button>
             </div>
-            <div className="mx-auto lg:col-span-1 max-w-4xl">
-              {/* <Card className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto"> */}
-              <Card className="sticky">
+            <div className="mx-auto max-w-3xl bg-white text-black rounded-none shadow-none border border-gray-300">
+              <div
+                id="resume-preview-content"
+                className="font-serif overflow-visible text-[13px] leading-relaxed tracking-wide text-gray-900 p-10"
+              >
+                <form.Subscribe selector={(state) => [state.values]}>
+                  {([values]) => (
+                    <div className="space-y-5">
+                      {/* Header */}
+                      <div className="text-center border-b border-gray-400 pb-2">
+                        <h1 className="text-2xl font-bold mb-1 uppercase tracking-wider">
+                          {values.name || "Your Name"}
+                        </h1>
+                        <div className="text-xs text-gray-700">
+                          {[
+                            values.address,
+                            values.email,
+                            values.phone,
+                            values.portfolio,
+                          ]
+                            .filter(Boolean)
+                            .join(" | ")}
+                        </div>
+                        {(values.linkedin || values.github) && (
+                          <div className="text-xs text-gray-700">
+                            {[values.linkedin, values.github]
+                              .filter(Boolean)
+                              .join(" | ")}
+                          </div>
+                        )}
+                      </div>
+                      {/* Summary */}
+                      {values.summary && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 tracking-wide uppercase">
+                            Professional Summary
+                          </h2>
+                          <p className="text-[12.5px] text-justify">
+                            {values.summary}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Education */}
+                      {values.education?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Education
+                          </h2>
+                          <div className="space-y-1.5">
+                            {values.education.map((edu, idx) => (
+                              <div key={idx}>
+                                <div className="flex justify-between text-[13px] font-semibold">
+                                  <span>
+                                    {edu.school || "Institute Name"}
+                                    {edu.degree && `, ${edu.degree}`}
+                                  </span>
+                                  {(edu.startDate || edu.endDate) &&
+                                    (() => {
+                                      const s = formatMonthYear(edu.startDate);
+                                      const e = formatMonthYear(edu.endDate);
+                                      let text: string | null = null;
+                                      if (s && e) text = `${s} – ${e}`;
+                                      else if (s && !e) text = `${s} – Present`;
+                                      else if (!s && e) text = e;
+                                      return text ? (
+                                        <div className="text-[12px] italic">
+                                          {text}
+                                        </div>
+                                      ) : null;
+                                    })()}
+                                </div>
+                                {edu.cgpaOrPercentage && (
+                                  <div className="text-[12.5px] ml-2">
+                                    •{" "}
+                                    {edu.cgpaOrPercentage.includes("%")
+                                      ? "Percentage"
+                                      : "GPA"}
+                                    : {edu.cgpaOrPercentage}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Experience */}
+                      {values.experience?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Experience
+                          </h2>
+                          <div className="space-y-2">
+                            {values.experience.map((exp, idx) => (
+                              <div key={idx}>
+                                <div className="flex justify-between text-[13px] font-semibold">
+                                  <span>
+                                    {exp.position || "Position"}
+                                    {exp.company && `, ${exp.company}`}
+                                  </span>
+                                  {(exp.startDate || exp.endDate) &&
+                                    (() => {
+                                      const s = formatMonthYear(exp.startDate);
+                                      const e = formatMonthYear(exp.endDate);
+                                      let text: string | null = null;
+                                      if (s && e) text = `${s} – ${e}`;
+                                      else if (s && !e) text = `${s} – Present`;
+                                      else if (!s && e) text = e;
+                                      return text ? (
+                                        <div className="text-xs italic">
+                                          {text}
+                                        </div>
+                                      ) : null;
+                                    })()}
+                                </div>
+                                {exp.description && (
+                                  <ul className="list-disc ml-5 mt-1 space-y-0.5 text-[12.5px]">
+                                    {exp.description
+                                      .split(/[\n.]+/)
+                                      .map((line) => line.trim())
+                                      .filter(Boolean)
+                                      .map((line, i) => (
+                                        <li key={i}>
+                                          {line.endsWith(".")
+                                            ? line
+                                            : line + "."}
+                                        </li>
+                                      ))}
+                                  </ul>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Projects */}
+                      {values.projects?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Projects
+                          </h2>
+                          <div className="space-y-2">
+                            {values.projects.map((proj, idx) => (
+                              <div key={idx}>
+                                <div className="flex justify-between text-[13px] font-semibold">
+                                  <span>{proj.title || "Project Title"}</span>
+                                  {proj.link && (
+                                    <span className="text-[11px] text-blue-600 underline truncate max-w-[150px]">
+                                      {proj.link.replace(/https?:\/\//, "")}
+                                    </span>
+                                  )}
+                                </div>
+                                <ul className="list-disc ml-5 mt-1 space-y-0.5 text-[12.5px]">
+                                  {proj.description
+                                    ?.split(/\n+/)
+                                    .filter(Boolean)
+                                    .map((line, i) => (
+                                      <li key={i}>{line}</li>
+                                    ))}
+                                </ul>
+                                {proj.highlights &&
+                                  proj.highlights.length > 0 && (
+                                    <ul className="list-disc ml-5 mt-1 space-y-0.5 text-[12.5px]">
+                                      {proj.highlights.map(
+                                        (highlight, hIdx) => (
+                                          <li key={hIdx}>
+                                            <span className="inline">
+                                              {highlight}
+                                            </span>
+                                          </li>
+                                        )
+                                      )}
+                                    </ul>
+                                  )}
+                                {proj.technologiesUsed &&
+                                  proj.technologiesUsed?.length > 0 && (
+                                    <p className="text-[12.5px] mt-1 ml-2">
+                                      <strong>Tools Used:</strong>{" "}
+                                      {proj.technologiesUsed.join(", ")}
+                                    </p>
+                                  )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Skills */}
+                      {values.skills?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Technologies
+                          </h2>
+                          <p className="text-[12.5px] ml-2">
+                            <strong>Skills:</strong> {values.skills.join(", ")}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Certifications */}
+                      {values.certifications?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Certifications
+                          </h2>
+                          <ul className="list-disc ml-5 text-[12.5px] space-y-0.5">
+                            {values.certifications.map((cert, idx) => (
+                              <li key={idx}>{cert}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Achievements */}
+                      {values.achievements?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Achievements
+                          </h2>
+                          <ul className="list-disc ml-5 text-[12.5px] space-y-0.5">
+                            {values.achievements.map((ach, idx) => (
+                              <li key={idx}>{ach}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Languages */}
+                      {values.languages?.length > 0 && (
+                        <div>
+                          <h2 className="text-sm font-bold border-b border-gray-300 mb-1 pb-0.5 uppercase">
+                            Languages
+                          </h2>
+                          <ul className="list-disc ml-5 text-[12.5px] space-y-0.5">
+                            {values.languages.map((lang, idx) => (
+                              <li key={idx}>{lang}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </form.Subscribe>
+              </div>
+            </div>
+
+            {/* <div className="mx-auto lg:col-span-1 max-w-4xl"> */}
+            {/* <Card className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto"> */}
+            {/* <Card className="sticky">
                 <CardContent className="p-8" id="resume-preview-content">
                   <form.Subscribe selector={(state) => [state.values]}>
                     {([values]) => (
                       // <div className="space-y-4 text-xs leading-tight font-serif">
-                      <div className="space-y-4 text-sm tracking-wider font-serif">
-                        {/* Header */}
-                        <div className="text-center border-b-2 border-muted-foreground pb-2">
+                      <div className="space-y-4 text-sm tracking-wider font-serif"> */}
+            {/* Header */}
+            {/* <div className="text-center border-b-2 border-muted-foreground pb-2">
                           <h1 className="text-3xl font-bold mb-1">
                             {values.name || "Your Name"}
                           </h1>
@@ -1127,10 +1375,10 @@ export function ResumeContentForm({
                                 .join(" | ")}
                             </div>
                           )}
-                        </div>
+                        </div> */}
 
-                        {/* Summary */}
-                        {values.summary && (
+            {/* Summary */}
+            {/* {values.summary && (
                           <div>
                             <h2 className="text-base font-bold mb-1.5">
                               PROFESSIONAL SUMMARY
@@ -1140,9 +1388,9 @@ export function ResumeContentForm({
                             </p>
                           </div>
                         )}
-
-                        {/* Education */}
-                        {values.education && values.education.length > 0 && (
+ */}
+            {/* Education */}
+            {/* {values.education && values.education.length > 0 && (
                           <div>
                             <h2 className="text-base font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
                               EDUCATION
@@ -1189,7 +1437,7 @@ export function ResumeContentForm({
                         )}
 
                         {/* Experience */}
-                        {values.experience && values.experience.length > 0 && (
+            {/* {values.experience && values.experience.length > 0 && (
                           <div>
                             <h2 className="text-base font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
                               EXPERIENCE
@@ -1249,7 +1497,7 @@ export function ResumeContentForm({
                         )}
 
                         {/* Projects */}
-                        {values.projects && values.projects.length > 0 && (
+            {/* {values.projects && values.projects.length > 0 && (
                           <div>
                             <h2 className="text-base font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
                               PROJECTS
@@ -1322,7 +1570,7 @@ export function ResumeContentForm({
                         )}
 
                         {/* Technologies/Skills */}
-                        {values.skills && values.skills.length > 0 && (
+            {/* {values.skills && values.skills.length > 0 && (
                           <div>
                             <h2 className="text-base font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
                               TECHNOLOGIES
@@ -1337,7 +1585,7 @@ export function ResumeContentForm({
                           </div>
                         )}
                         {/* Certifications */}
-                        {values.certifications &&
+            {/* {values.certifications &&
                           values.certifications.length > 0 && (
                             <div>
                               <h2 className="text-base font-bold border-b border-muted-foreground mb-1.5 pb-0.5">
@@ -1354,7 +1602,7 @@ export function ResumeContentForm({
                             </div>
                           )}
                         {/* Languages */}
-                        {values.languages && values.languages.length > 0 && (
+            {/* {values.languages && values.languages.length > 0 && (
                           <div className="pl-2">
                             <span className="inline-block w-2">•</span>
                             <span className="inline">
@@ -1365,7 +1613,7 @@ export function ResumeContentForm({
                         )}
 
                         {/* Achievements */}
-                        {values.achievements &&
+            {/* {values.achievements &&
                           values.achievements.length > 0 && (
                             <div>
                               <h2 className="text-base font-bold border-b border-black mb-1.5 pb-0.5">
@@ -1388,7 +1636,7 @@ export function ResumeContentForm({
                   </form.Subscribe>
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </TabsContent>
           <TabsContent value="analysis" className="w-full">
             {/* Resume Analysis */}
@@ -1508,7 +1756,7 @@ export function ResumeContentForm({
                                     className="text-sm flex items-start gap-2 leading-relaxed"
                                   >
                                     <span
-                                      className={`inline-block flex-shrink-0 w-[10px] h-[10px] rounded-full mt-[6px] ${
+                                      className={`inline-block shrink-0 w-[10px] h-[10px] rounded-full mt-[6px] ${
                                         item.type === "strength"
                                           ? "bg-green-500"
                                           : item.type === "minor-improvement"

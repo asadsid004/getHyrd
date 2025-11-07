@@ -40,13 +40,13 @@ export const ResumeCreateForm = () => {
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
       }),
-      onSubmit: async ({ value }) => {
-        const input = {
-          ...value,
-        };
+    },
+    onSubmit: async ({ value }) => {
+      const input = {
+        ...value,
+      };
 
-        createMutation.mutate(input);
-      },
+      createMutation.mutate(input);
     },
   });
 

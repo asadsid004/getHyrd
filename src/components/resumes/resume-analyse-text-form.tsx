@@ -39,22 +39,22 @@ export const ResumeAnalyseTextForm = ({ id }: { id: string }) => {
         role: z.string().min(1, "Role is required"),
         description: z.string().min(1, "Description is required"),
       }),
-      onSubmit: async ({ value }) => {
-        const resumeId = id as string;
+    },
+    onSubmit: async ({ value }) => {
+      const resumeId = id as string;
 
-        console.log("Resume ID: " + resumeId);
+      console.log("Resume ID: " + resumeId);
 
-        if (!value.role || !value.description) {
-          toast.error("Please fill in all fields");
-          return;
-        }
+      if (!value.role || !value.description) {
+        toast.error("Please fill in all fields");
+        return;
+      }
 
-        analyseMutation.mutate({
-          resumeId,
-          role: value.role,
-          description: value.description,
-        });
-      },
+      analyseMutation.mutate({
+        resumeId,
+        role: value.role,
+        description: value.description,
+      });
     },
   });
 

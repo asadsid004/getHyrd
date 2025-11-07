@@ -226,3 +226,143 @@ export async function generateCoverLetterPDF(elementId: string, fileName: string
         throw error;
     }
 }
+
+// import html2canvas from "html2canvas";
+// import jsPDF from "jspdf";
+
+// function hasUnsupportedColor(value: string | null | undefined): boolean {
+//     if (!value) return false;
+//     const v = value.toLowerCase().trim();
+//     return (
+//         v.includes("lab(") ||
+//         v.includes("lch(") ||
+//         v.includes("oklab(") ||
+//         v.includes("oklch(") ||
+//         v.startsWith("color(")
+//     );
+// }
+
+// function sanitizeColorsDeep(root: HTMLElement) {
+//     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+//     const process = (el: Element) => {
+//         const cs: CSSStyleDeclaration = window.getComputedStyle(el);
+//         const style = (el as HTMLElement).style;
+
+//         const colorProps = [
+//             "color",
+//             "background-color",
+//             "border-color",
+//             "border-top-color",
+//             "border-right-color",
+//             "border-bottom-color",
+//             "border-left-color",
+//             "outline-color",
+//             "text-decoration-color",
+//             "box-shadow",
+//             "background-image",
+//             "filter",
+//         ] as const;
+
+//         colorProps.forEach((prop) => {
+//             const val = cs.getPropertyValue(prop);
+//             if (hasUnsupportedColor(val)) {
+//                 if (prop === "color") style.setProperty(prop, "#000000");
+//                 else if (prop === "background-color") style.setProperty(prop, "#ffffff");
+//                 else if (prop.includes("border") && prop.includes("color"))
+//                     style.setProperty(prop, "#000000");
+//                 else if (prop === "outline-color") style.setProperty(prop, "#000000");
+//                 else if (prop === "text-decoration-color")
+//                     style.setProperty(prop, "#000000");
+//                 else if (prop === "box-shadow") style.setProperty(prop, "none");
+//                 else if (prop === "background-image") style.setProperty(prop, "none");
+//                 else if (prop === "filter") style.setProperty(prop, "none");
+//             }
+//         });
+
+//         const inlineStyle = style.cssText;
+//         if (hasUnsupportedColor(inlineStyle)) {
+//             style.cssText = inlineStyle
+//                 .replace(/lab\([^)]*\)/gi, "#000")
+//                 .replace(/lch\([^)]*\)/gi, "#000")
+//                 .replace(/oklab\([^)]*\)/gi, "#000")
+//                 .replace(/oklch\([^)]*\)/gi, "#000")
+//                 .replace(/color\([^)]*\)/gi, "#000");
+//         }
+//     };
+//     process(root);
+//     while (walker.nextNode()) {
+//         process(walker.currentNode as Element);
+//     }
+// }
+
+// async function generatePDF(elementId: string, fileName: string) {
+//     const element = document.getElementById(elementId);
+//     if (!element) throw new Error(`${fileName} element not found`);
+
+//     // Clone and prepare
+//     const clone = element.cloneNode(true) as HTMLElement;
+//     clone.style.width = "210mm";
+//     clone.style.backgroundColor = "white";
+//     clone.style.position = "absolute";
+//     clone.style.left = "-9999px";
+//     document.body.appendChild(clone);
+
+//     try {
+//         // Apply safe color styles
+//         const style = document.createElement("style");
+//         style.textContent = `
+//       * {
+//         color: #000 !important;
+//         background-color: #fff !important;
+//         border-color: #000 !important;
+//         box-shadow: none !important;
+//         filter: none !important;
+//       }
+//     `;
+//         clone.appendChild(style);
+//         sanitizeColorsDeep(clone);
+
+//         const canvas = await html2canvas(clone, {
+//             scale: 2,
+//             useCORS: true,
+//             logging: false,
+//             backgroundColor: "#ffffff",
+//         });
+
+//         const imgData = canvas.toDataURL("image/png");
+//         const pdf = new jsPDF("p", "mm", "a4");
+
+//         const pdfWidth = pdf.internal.pageSize.getWidth();
+//         const pdfHeight = pdf.internal.pageSize.getHeight();
+
+//         const imgWidth = pdfWidth;
+//         const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+//         let heightLeft = imgHeight;
+//         let position = 0;
+
+//         // Add first page
+//         pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+//         heightLeft -= pdfHeight;
+
+//         // Add extra pages if needed
+//         while (heightLeft > 0) {
+//             position = heightLeft - imgHeight;
+//             pdf.addPage();
+//             pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+//             heightLeft -= pdfHeight;
+//         }
+
+//         pdf.save(fileName);
+//     } finally {
+//         document.body.removeChild(clone);
+//     }
+// }
+
+// export async function generateResumePDF(elementId: string, fileName: string) {
+//     return generatePDF(elementId, fileName);
+// }
+
+// export async function generateCoverLetterPDF(elementId: string, fileName: string) {
+//     return generatePDF(elementId, fileName);
+// }
